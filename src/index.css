@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rincon-cream: #F4EFE6;
+  --color-rincon-olive: #3F4A32; /* Tu verde oliva oscuro del logo */
+  --color-rincon-brown: #7E5B3D;
+  
+  --font-serif: "Playfair Display", "Georgia", serif;
+}
+
+@layer base {
+  /* Cambiamos el fondo del body a oliva y el texto a crema */
+  body {
+    @apply bg-rincon-olive text-rincon-cream font-sans selection:bg-rincon-brown selection:text-rincon-cream;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+
+  button {
+    @apply transition-all duration-300 active:scale-[0.98] cursor-pointer;
+  }
+}

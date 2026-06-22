@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
   const navigate = useNavigate();
 
   useEffect(() => { fetchData(); }, []);
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
     const formData = new FormData(e.target);
     const name = formData.get('name');
     const price = parseFloat(formData.get('price'));
+    const category = formData.get('category');
     const file = formData.get('image');
     
     let imageUrl = '';
@@ -33,11 +35,20 @@ export default function AdminDashboard() {
         imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
     }
 
-    await supabase.from('productos').insert([{ name, price, image_url: imageUrl }]);
+    await supabase.from('productos').insert([{ name, price, category, image_url: imageUrl }]);
     e.target.reset();
     fetchData();
     setLoading(false);
   }
+
+  async function handleDelete(id) {
+    await supabase.from('productos').delete().eq('id', id);
+    fetchData();
+  }
+
+  const productosFiltrados = categoriaFiltro === 'Todos' 
+    ? productos 
+    : productos.filter(p => p.category === categoriaFiltro);
 
   return (
     <div className="flex min-h-screen bg-[#2D3025] text-[#EAE6D6] font-serif">
@@ -60,19 +71,36 @@ export default function AdminDashboard() {
               <h3 className="text-xl mb-4">Nuevo Producto</h3>
               <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]" required />
               <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]" required />
+              <select name="category" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]">
+                <option value="Mates">Mates</option>
+                <option value="Yerbas">Yerbas</option>
+                <option value="Bombillas">Bombillas</option>
+                <option value="Accesorios">Accesorios</option>
+              </select>
               <div className="flex items-center gap-4">
                 <label className="cursor-pointer bg-[#2D3025] border border-[#454a3b] px-4 py-2 rounded-lg text-sm hover:bg-[#3d4234] transition">
-                  SELECCIONAR FOTO
-                  <input type="file" name="image" className="hidden" />
+                  SELECCIONAR FOTO <input type="file" name="image" className="hidden" />
                 </label>
                 <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-lg font-bold hover:opacity-90">GUARDAR</button>
               </div>
             </form>
 
+            <div className="flex gap-2 mb-4">
+              {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
+                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-4 py-1 rounded-full text-sm ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-4">
-              {productos.map(p => (
+              {productosFiltrados.map(p => (
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
-                  <span>{p.name} - ${p.price}</span>
+                  <span>{p.name} - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</span>
+                  <div className="flex gap-4">
+                    <button onClick={() => navigator.clipboard.writeText(p.id)} className="text-xs uppercase opacity-50">ID</button>
+                    <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs uppercase underline">Eliminar</button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,12 +1,15 @@
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity } = useCart();
   
-  // El cálculo es reactivo: se recalcula siempre que 'cart' cambie
-  const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  // Cálculo reactivo garantizado
+  const total = useMemo(() => {
+    return cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  }, [cart]);
 
   const handleCheckout = () => {
     const phoneNumber = "5493400000000"; 
@@ -30,7 +33,6 @@ export default function CartPage() {
       <h1 className="text-4xl font-serif font-bold text-rincon-cream mb-12 text-center">Tu Pedido</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-        {/* Lista de productos */}
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
             <div key={item.id} className="flex items-center justify-between p-6 bg-rincon-cream/5 rounded-2xl border border-rincon-cream/10">
@@ -53,7 +55,6 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Resumen */}
         <div className="lg:col-span-1">
           <div className="bg-rincon-cream/5 p-8 rounded-3xl border border-rincon-cream/10 sticky top-24">
             <h2 className="text-2xl font-serif text-rincon-cream mb-6">Sumario</h2>

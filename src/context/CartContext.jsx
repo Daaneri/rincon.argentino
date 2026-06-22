@@ -34,7 +34,7 @@ export function CartProvider({ children }) {
         .map((item) => 
           item.id === productId ? { ...item, quantity: item.quantity + delta } : item
         )
-        .filter((item) => item.quantity > 0) // Si la cantidad es 0, se elimina
+        .filter((item) => item.quantity > 0) // <--- ESTO ELIMINA EL PRODUCTO EN 0
     );
   };
 

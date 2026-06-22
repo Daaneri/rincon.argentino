@@ -22,102 +22,101 @@ export default function AdminDashboard() {
     setOrders(data || []);
   }
 
-  // --- COMPONENTES AUXILIARES ---
   const Card = ({ children, className = "" }) => (
-    <div className={`bg-[#2d3025] rounded-3xl p-8 border border-[#e6dcc8]/5 shadow-xl ${className}`}>
+    <div className={`bg-[#181818] rounded-2xl p-6 border border-[#2a2a2a] ${className}`}>
       {children}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#1a1c17] text-[#e6dcc8] p-10 font-sans selection:bg-[#e6dcc8] selection:text-[#1a1c17]">
-      <header className="mb-12">
-        <h1 className="text-5xl font-serif font-light tracking-tight mb-3">Panel de Gestión</h1>
-        <div className="flex gap-2 bg-[#2d3025] p-1.5 rounded-2xl w-fit border border-[#e6dcc8]/10">
-          {['inventory', 'orders', 'metrics'].map(tab => (
-            <button 
-              key={tab} 
-              onClick={() => setActiveTab(tab)}
-              className={`px-8 py-2.5 rounded-xl capitalize transition-all duration-300 ${activeTab === tab ? 'bg-[#e6dcc8] text-[#1a1c17] font-medium shadow-lg' : 'text-[#e6dcc8]/60 hover:text-[#e6dcc8]'}`}
-            >
-              {tab}
-            </button>
-          ))}
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-8 font-sans">
+      <header className="flex justify-between items-center mb-10">
+        <div>
+          <h1 className="text-3xl font-bold">PANEL DE GESTIÓN</h1>
+          <p className="text-gray-500 text-sm">admin: ejemplo@gmail.com</p>
+        </div>
+        <div className="space-x-4">
+          <button className="text-sm border border-gray-800 px-4 py-2 rounded-lg hover:bg-white hover:text-black transition">VER TIENDA</button>
+          <button className="text-sm bg-gray-900 border border-gray-800 px-4 py-2 rounded-lg hover:bg-red-900 transition">CERRAR SESIÓN</button>
         </div>
       </header>
 
-      <main>
+      {/* Tabs con el nuevo color verde */}
+      <div className="flex gap-4 mb-8">
+        {['inventory', 'orders', 'metrics'].map(tab => (
+          <button 
+            key={tab} 
+            onClick={() => setActiveTab(tab)}
+            className={`px-6 py-2 rounded-lg capitalize text-sm font-bold transition ${activeTab === tab ? 'bg-[#25D366] text-black' : 'bg-gray-900 hover:bg-gray-800'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {activeTab === 'inventory' && (
-          <Card>
-            <div className="flex justify-between items-center mb-8">
-              <input 
-                placeholder="Buscar productos..." 
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-[#1a1c17] border border-[#e6dcc8]/10 p-3 px-5 rounded-xl w-1/3 outline-none focus:border-[#e6dcc8]/40" 
-              />
+          <Card className="md:col-span-1">
+            <h2 className="text-lg font-bold mb-6 text-[#25D366]">NUEVO PRODUCTO</h2>
+            <div className="space-y-4">
+              <input placeholder="NOMBRE" className="w-full bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a] outline-none focus:border-[#25D366]" />
+              <input placeholder="PRECIO ($)" className="w-full bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a] outline-none focus:border-[#25D366]" />
+              <input placeholder="URL DE LA IMAGEN" className="w-full bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a] outline-none focus:border-[#25D366]" />
+              <textarea placeholder="DESCRIPCIÓN CORTA" className="w-full bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a] h-24 outline-none focus:border-[#25D366]" />
+              <button className="w-full bg-[#25D366] text-black font-bold py-3 rounded-lg hover:bg-white transition">PUBLICAR EN WEB</button>
             </div>
-            <table className="w-full">
-              <thead>
-                <tr className="text-[#e6dcc8]/40 text-left border-b border-[#e6dcc8]/10 text-xs uppercase tracking-widest">
-                  <th className="pb-6 font-normal">Nombre</th>
-                  <th className="pb-6 font-normal">Precio</th>
-                  <th className="pb-6 font-normal">Stock</th>
-                  <th className="pb-6 font-normal text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e6dcc8]/5">
-                {productos.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
-                  <tr key={p.id} className="group hover:bg-[#e6dcc8]/5 transition-colors">
-                    <td className="py-6">{p.name}</td>
-                    <td className="py-6 font-mono">${p.price}</td>
-                    <td className="py-6">{p.stock || 0}</td>
-                    <td className="py-6 text-right">
-                      <button className="text-red-400/40 hover:text-red-400 transition-colors">Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </Card>
         )}
 
-        {activeTab === 'orders' && (
-          <Card>
-            <table className="w-full">
-              <thead>
-                <tr className="text-[#e6dcc8]/40 text-left border-b border-[#e6dcc8]/10 text-xs uppercase tracking-widest">
-                  <th className="pb-6 font-normal">Cliente</th>
-                  <th className="pb-6 font-normal">Total</th>
-                  <th className="pb-6 font-normal">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e6dcc8]/5">
+        <Card className={activeTab === 'inventory' ? "md:col-span-2" : "md:col-span-3"}>
+          <h2 className="text-lg font-bold mb-6 uppercase">
+            {activeTab === 'inventory' ? `PRODUCTOS ONLINE (${productos.length})` : activeTab}
+          </h2>
+          
+          {activeTab === 'inventory' && (
+            <div className="space-y-4">
+              {productos.map(p => (
+                <div key={p.id} className="flex items-center justify-between bg-[#0d0d0d] p-4 rounded-lg border border-[#2a2a2a]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-800 rounded"></div>
+                    <div>
+                      <p className="font-bold uppercase">{p.name}</p>
+                      <p className="text-[#25D366] font-bold">${p.price}</p>
+                    </div>
+                  </div>
+                  <div className="space-x-2">
+                    <button className="text-xs bg-gray-800 px-3 py-1 rounded hover:bg-white hover:text-black">EDITAR</button>
+                    <button className="text-xs bg-gray-900 px-3 py-1 rounded hover:bg-red-900">ELIMINAR</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'orders' && (
+            <table className="w-full text-left">
+              <thead className="text-gray-500 text-xs uppercase"><tr><th className="pb-4">Cliente</th><th className="pb-4">Total</th><th className="pb-4">Estado</th></tr></thead>
+              <tbody>
                 {orders.map(o => (
-                  <tr key={o.id}>
-                    <td className="py-6">{o.customer_name}</td>
-                    <td className="py-6">${o.total}</td>
-                    <td className="py-6">
-                      <span className="px-3 py-1 rounded-full bg-[#e6dcc8]/5 text-xs uppercase tracking-wider">{o.status}</span>
-                    </td>
+                  <tr key={o.id} className="border-t border-[#2a2a2a]">
+                    <td className="py-4">{o.customer_name}</td>
+                    <td className="py-4">${o.total}</td>
+                    <td className="py-4"><span className="bg-gray-800 px-2 py-1 rounded text-xs">{o.status}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </Card>
-        )}
+          )}
 
-        {activeTab === 'metrics' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="flex flex-col justify-between h-48">
-              <span className="text-[#e6dcc8]/50 uppercase tracking-widest text-xs">Ingresos Totales</span>
-              <p className="text-5xl font-serif">${orders.reduce((acc, o) => acc + Number(o.total), 0)}</p>
-            </Card>
-            <Card className="flex flex-col justify-between h-48">
-              <span className="text-[#e6dcc8]/50 uppercase tracking-widest text-xs">Total Pedidos</span>
-              <p className="text-5xl font-serif">{orders.length}</p>
-            </Card>
-          </div>
-        )}
+          {activeTab === 'metrics' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#0d0d0d] p-6 rounded-lg border border-[#2a2a2a]">
+                <p className="text-gray-500 text-sm">TOTAL VENDIDO</p>
+                <p className="text-3xl font-bold text-[#25D366]">${orders.reduce((acc, o) => acc + Number(o.total), 0)}</p>
+              </div>
+            </div>
+          )}
+        </Card>
       </main>
     </div>
   );

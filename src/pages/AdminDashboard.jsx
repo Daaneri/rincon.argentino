@@ -19,7 +19,6 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
-  // --- Lógica para subir imagen y guardar producto ---
   async function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
@@ -47,7 +46,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#2D3025] text-[#EAE6D6] font-sans">
-      {/* Sidebar elegante */}
+      {/* Sidebar estilo Rincón Argentino */}
       <aside className="w-64 border-r border-[#3d4234] p-10 flex flex-col">
         <h1 className="text-2xl font-serif mb-12 tracking-wide italic">Rincón Admin</h1>
         <nav className="space-y-8 flex-grow">
@@ -60,17 +59,27 @@ export default function AdminDashboard() {
         <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-xs text-[#5c6356] uppercase tracking-widest">Cerrar sesión</button>
       </aside>
 
-      {/* Contenido */}
       <main className="flex-1 p-16">
         {view === 'inventory' && (
           <div className="max-w-4xl space-y-12">
+            {/* Formulario mejorado según image_57279e.png */}
             <form onSubmit={handleAddProduct} className="bg-[#35382d] p-8 rounded border border-[#454a3b] space-y-4">
-              <h3 className="font-serif text-lg">Nuevo Producto</h3>
-              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-2 border border-[#454a3b]" required />
-              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-2 border border-[#454a3b]" required />
-              <input type="file" name="image" className="text-sm" />
-              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-6 py-2 font-bold hover:opacity-90">GUARDAR</button>
+              <h3 className="font-serif text-lg mb-4">Nuevo Producto</h3>
+              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 border border-[#454a3b] placeholder-[#8c9284]" required />
+              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-3 border border-[#454a3b] placeholder-[#8c9284]" required />
+              
+              {/* Botón personalizado para archivo */}
+              <div className="flex items-center gap-4">
+                <label className="cursor-pointer bg-[#2D3025] border border-[#454a3b] px-4 py-2 text-sm text-[#EAE6D6] hover:bg-[#3d4234] transition">
+                  SELECCIONAR FOTO
+                  <input type="file" name="image" className="hidden" />
+                </label>
+                <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 font-bold hover:opacity-90">
+                  {loading ? 'GUARDANDO...' : 'GUARDAR'}
+                </button>
+              </div>
             </form>
+
             <div className="grid gap-4">
               {productos.map(p => (
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-4 rounded border border-[#454a3b]">

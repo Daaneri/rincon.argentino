@@ -9,6 +9,8 @@ import Footer from './components/Footer';
 import FloatingCart from './components/FloatingCart'; 
 import { CartProvider } from './context/CartContext';
 import { Toaster } from 'sonner';
+// Importamos el panel
+import AdminDashboard from './pages/AdminDashboard'; 
 
 function App() {
   return (
@@ -20,7 +22,6 @@ function App() {
           <Navbar />
           <FloatingCart />
           
-          {/* Botón de WhatsApp: bottom-24 para que quede arriba del carrito */}
           <a 
             href="https://wa.me/541134703230" 
             target="_blank" 
@@ -32,6 +33,7 @@ function App() {
           
           <main className="flex-grow">
             <Routes>
+              {/* Ruta principal */}
               <Route path="/" element={
                 <div className="flex flex-col">
                   <section className="py-24 md:py-40 px-6 text-center border-b border-[#E6DCC8]/5">
@@ -59,6 +61,10 @@ function App() {
               <Route path="/cart" element={<div className="p-8 max-w-4xl mx-auto min-h-[60vh] mt-10"><CartPage /></div>} />
               <Route path="/producto/:id" element={<div className="p-8 max-w-6xl mx-auto min-h-[60vh] mt-10"><ProductDetail /></div>} />
               <Route path="/about" element={<div className="p-8 max-w-4xl mx-auto min-h-[60vh] mt-10"><About /></div>} />
+              
+              {/* NUEVA RUTA DEL PANEL */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              
             </Routes>
           </main>
           

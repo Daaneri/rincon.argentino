@@ -2,20 +2,37 @@ import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
+import { supabase } from '../supabaseClient'; // Importamos supabase
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity } = useCart();
   
-  // Cálculo reactivo garantizado
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   }, [cart]);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    // 1. Guardar en Supabase
+    const { error } = await supabase
+      .from('orders')
+      .insert([{ 
+        customer_name: 'Cliente Web', // Podrías pedir el nombre en un formulario
+        total: total, 
+        status: 'pendiente' 
+      }]);
+
+    if (error) {
+      console.error("Error al guardar:", error);
+      alert("Hubo un error al procesar el pedido. Intenta nuevamente.");
+      return;
+    }
+
+    // 2. Abrir WhatsApp si el registro fue exitoso
     const phoneNumber = "5493400000000"; 
     let message = "¡Hola! Quiero realizar este pedido:\n\n";
     cart.forEach(item => message += `- ${item.name} (x${item.quantity}): $${item.price * item.quantity}\n`);
     message += `\n*Total: $${total}*`;
+    
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -29,6 +46,7 @@ export default function CartPage() {
   }
 
   return (
+    // ... el resto de tu código de renderizado (se mantiene igual)
     <div className="w-full max-w-[1200px] mx-auto py-12 px-6">
       <h1 className="text-4xl font-serif font-bold text-rincon-cream mb-12 text-center">Tu Pedido</h1>
       

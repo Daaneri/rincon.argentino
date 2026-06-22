@@ -3,16 +3,15 @@ import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('inventory');
   const [productos, setProductos] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [editData, setEditData] = useState(null); // Estado para el producto en edición
+  const [editData, setEditData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkUser();
     fetchProductos();
-    fetchOrders();
   }, []);
 
   async function checkUser() {
@@ -25,110 +24,88 @@ export default function AdminDashboard() {
     setProductos(data || []);
   }
 
-  async function fetchOrders() {
-    const { data } = await supabase.from('orders').select('*');
-    setOrders(data || []);
+  async function handleFileUpload(file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const { data, error } = await supabase.storage.from('productos').upload(fileName, file);
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from('productos').getPublicUrl(fileName);
+    return urlData.publicUrl;
   }
 
-  async function handleAddProduct(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const newProduct = Object.fromEntries(formData.entries());
-    await supabase.from('productos').insert([newProduct]);
-    e.target.reset();
-    fetchProductos();
-  }
+    setLoading(true);
+    
+    try {
+      const formData = new FormData(e.target);
+      const name = formData.get('name').trim();
+      const price = parseFloat(formData.get('price'));
+      const description = formData.get('description').trim();
 
-  async function handleDelete(id) {
-    if (!window.confirm("¿Estás seguro de eliminar este producto?")) return;
-    await supabase.from('productos').delete().eq('id', id);
-    fetchProductos();
-  }
+      // Validaciones
+      if (isNaN(price) || price <= 0) throw new Error("Precio inválido");
+      if (name.length < 3 || description.length < 10) throw new Error("Datos demasiado cortos");
 
-  async function handleUpdate(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const updates = Object.fromEntries(formData.entries());
-    await supabase.from('productos').update(updates).eq('id', editData.id);
-    setEditData(null);
-    fetchProductos();
+      let imageUrl = editData?.image_url || "";
+      if (file) imageUrl = await handleFileUpload(file);
+
+      const payload = { name, price, description, image_url: imageUrl };
+
+      if (editData) {
+        await supabase.from('productos').update(payload).eq('id', editData.id);
+        setEditData(null);
+      } else {
+        await supabase.from('productos').insert([payload]);
+      }
+      
+      e.target.reset();
+      setFile(null);
+      fetchProductos();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+    setLoading(false);
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e6dcc8] p-8 font-sans">
-      {/* MODAL DE EDICIÓN */}
-      {editData && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleUpdate} className="bg-[#2D3025] p-8 rounded-2xl w-full max-w-sm border border-[#e6dcc8]/20">
-            <h2 className="text-xl font-bold mb-4">EDITAR PRODUCTO</h2>
-            <input name="name" defaultValue={editData.name} className="w-full bg-[#1a1c17] p-3 mb-4 rounded-lg border border-[#e6dcc8]/10" />
-            <input name="price" type="number" defaultValue={editData.price} className="w-full bg-[#1a1c17] p-3 mb-4 rounded-lg border border-[#e6dcc8]/10" />
-            <div className="flex gap-2">
-              <button type="submit" className="flex-1 bg-[#e6dcc8] text-black font-bold py-2 rounded-lg">GUARDAR</button>
-              <button type="button" onClick={() => setEditData(null)} className="flex-1 bg-gray-800 py-2 rounded-lg">CANCELAR</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <header className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-bold font-serif tracking-widest">PANEL DE GESTIÓN</h1>
-        <div className="space-x-4">
-          <button onClick={() => navigate('/')} className="text-sm border border-[#2D3025] px-4 py-2 rounded-lg hover:bg-[#2D3025] transition">VER TIENDA</button>
-          <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-sm bg-red-900/20 border border-red-900 px-4 py-2 rounded-lg hover:bg-red-900 transition">CERRAR SESIÓN</button>
-        </div>
+    <div className="min-h-screen bg-[#050505] text-zinc-300 font-sans p-6 md:p-12">
+      <header className="max-w-6xl mx-auto mb-16 border-b border-zinc-900 pb-8 flex justify-between items-center">
+        <h1 className="text-2xl font-light text-white">Panel de Gestión</h1>
+        <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-xs text-zinc-600 hover:text-white">SALIR</button>
       </header>
 
-      <div className="flex gap-4 mb-8">
-        {['inventory', 'orders', 'metrics'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} 
-            className={`px-6 py-2 rounded-lg capitalize text-sm font-bold transition ${activeTab === tab ? 'bg-[#2D3025] border border-[#e6dcc8]/20' : 'bg-[#1a1c17] hover:bg-[#2D3025]'}`}>
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {activeTab === 'inventory' && (
-          <form onSubmit={handleAddProduct} className="bg-[#2D3025] p-6 rounded-2xl border border-[#e6dcc8]/5 h-fit">
-            <h2 className="text-lg font-bold mb-6">NUEVO PRODUCTO</h2>
-            <div className="space-y-4">
-              <input name="name" placeholder="NOMBRE" required className="w-full bg-[#1a1c17] p-3 rounded-lg border border-[#e6dcc8]/10" />
-              <input name="price" type="number" placeholder="PRECIO" required className="w-full bg-[#1a1c17] p-3 rounded-lg border border-[#e6dcc8]/10" />
-              <input name="image_url" placeholder="URL IMAGEN" className="w-full bg-[#1a1c17] p-3 rounded-lg border border-[#e6dcc8]/10" />
-              <button type="submit" className="w-full bg-[#e6dcc8] text-[#0a0a0a] font-bold py-3 rounded-lg">PUBLICAR</button>
-            </div>
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <section className="lg:col-span-1">
+          <form onSubmit={handleSubmit} className="bg-[#0c0c0c] border border-zinc-800 p-8 rounded-xl space-y-4">
+            <h2 className="text-white text-xs font-bold uppercase">{editData ? "Editar" : "Nuevo Producto"}</h2>
+            
+            {/* Input de Imagen (Galería/Arrastrar) */}
+            <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full text-xs text-zinc-500 file:mr-4 file:py-2 file:px-4 file:bg-zinc-800 file:border-0 file:text-white file:rounded" />
+            
+            <input name="name" defaultValue={editData?.name} placeholder="Nombre" className="w-full bg-transparent border-b border-zinc-700 py-2 text-sm outline-none focus:border-white" required />
+            <input name="price" type="number" step="0.01" defaultValue={editData?.price} placeholder="Precio" className="w-full bg-transparent border-b border-zinc-700 py-2 text-sm outline-none focus:border-white" required />
+            <textarea name="description" defaultValue={editData?.description} placeholder="Descripción" className="w-full bg-transparent border-b border-zinc-700 py-2 text-sm outline-none h-24" required />
+            
+            <button disabled={loading} className="w-full bg-white text-black font-bold py-3 rounded text-xs">
+              {loading ? "PROCESANDO..." : "GUARDAR PRODUCTO"}
+            </button>
           </form>
-        )}
+        </section>
 
-        <div className={`bg-[#2D3025] p-6 rounded-2xl border border-[#e6dcc8]/5 ${activeTab === 'inventory' ? "md:col-span-2" : "md:col-span-3"}`}>
-          <h2 className="text-lg font-bold mb-6 uppercase">{activeTab}</h2>
-          
-          {activeTab === 'inventory' && productos.map(p => (
-            <div key={p.id} className="flex justify-between items-center bg-[#1a1c17] p-4 mb-2 rounded-lg border border-[#e6dcc8]/5">
-              <span>{p.name} - ${p.price}</span>
-              <div className="space-x-3">
-                <button onClick={() => setEditData(p)} className="text-xs hover:text-[#e6dcc8]">EDITAR</button>
-                <button onClick={() => handleDelete(p.id)} className="text-xs text-red-400">ELIMINAR</button>
+        <section className="lg:col-span-2 space-y-4">
+          {productos.map((p) => (
+            <div key={p.id} className="bg-[#0c0c0c] border border-zinc-800 p-4 rounded-xl flex items-center gap-4">
+              {p.image_url && <img src={p.image_url} className="w-16 h-16 object-cover rounded" />}
+              <div className="flex-grow">
+                <h3 className="text-white text-sm font-medium">{p.name}</h3>
+                <p className="text-xs text-zinc-500 truncate">{p.description}</p>
+                <p className="text-xs text-zinc-400 font-mono">${p.price}</p>
               </div>
+              <button onClick={() => setEditData(p)} className="text-[10px] text-zinc-500 hover:text-white">EDITAR</button>
             </div>
           ))}
-
-          {activeTab === 'orders' && orders.map(o => (
-            <div key={o.id} className="flex justify-between p-4 border-b border-[#e6dcc8]/10">
-              <span>{o.customer_name}</span>
-              <span>${o.total}</span>
-              <span className="text-xs px-2 py-1 bg-[#1a1c17] rounded">{o.status}</span>
-            </div>
-          ))}
-
-          {activeTab === 'metrics' && (
-            <div className="text-center py-10">
-              <p className="text-sm text-[#e6dcc8]/50">TOTAL VENDIDO</p>
-              <p className="text-4xl font-bold">${orders.reduce((acc, o) => acc + Number(o.total), 0)}</p>
-            </div>
-          )}
-        </div>
+        </section>
       </main>
     </div>
   );

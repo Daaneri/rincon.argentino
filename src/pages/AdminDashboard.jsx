@@ -1,77 +1,113 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
-  const [view, setView] = useState('home'); // home, inventory, orders, metrics
+  const [view, setView] = useState('inventory');
+  const [productos, setProductos] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => { fetchData(); }, []);
+
+  async function fetchData() {
+    const { data: p } = await supabase.from('productos').select('*');
+    const { data: o } = await supabase.from('pedidos').select('*');
+    setProductos(p || []);
+    setPedidos(o || []);
+  }
+
+  // --- Lógica para subir imagen y guardar producto ---
+  async function handleAddProduct(e) {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    const price = parseFloat(formData.get('price'));
+    const file = formData.get('image');
+    
+    let imageUrl = '';
+    if (file && file.size > 0) {
+        const { data } = await supabase.storage.from('productos').upload(`${Date.now()}`, file);
+        imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
+    }
+
+    await supabase.from('productos').insert([{ name, price, image_url: imageUrl }]);
+    e.target.reset();
+    fetchData();
+    setLoading(false);
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('productos').delete().eq('id', id);
+    fetchData();
+  }
 
   return (
     <div className="flex min-h-screen bg-[#2D3025] text-[#EAE6D6] font-sans">
-      {/* SIDEBAR - Estilo Minimalista */}
-      <aside className="w-64 border-r border-[#3d4234] p-8 flex flex-col">
-        <h1 className="text-xl font-serif mb-12 italic">Rincón Admin</h1>
-        <nav className="space-y-6 flex-grow">
-          {['home', 'inventory', 'orders', 'metrics'].map(item => (
-            <button key={item} onClick={() => setView(item)} className={`block capitalize hover:text-white transition ${view === item ? 'text-white font-bold' : 'text-[#8c9284]'}`}>
+      {/* Sidebar elegante */}
+      <aside className="w-64 border-r border-[#3d4234] p-10 flex flex-col">
+        <h1 className="text-2xl font-serif mb-12 tracking-wide italic">Rincón Admin</h1>
+        <nav className="space-y-8 flex-grow">
+          {['inventory', 'orders', 'metrics'].map(item => (
+            <button key={item} onClick={() => setView(item)} className={`block capitalize transition ${view === item ? 'text-white font-bold border-l-2 border-[#EAE6D6] pl-4' : 'text-[#8c9284] hover:text-white pl-4'}`}>
               {item}
             </button>
           ))}
         </nav>
-        <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-sm text-[#5c6356]">Cerrar sesión</button>
+        <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-xs text-[#5c6356] uppercase tracking-widest">Cerrar sesión</button>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 p-12">
-        {view === 'inventory' && <InventorySection />}
-        {view === 'metrics' && <MetricsSection />}
-        {view === 'orders' && <OrdersSection />}
-        {view === 'home' && <h2 className="text-3xl font-serif">Bienvenido al panel de gestión</h2>}
+      {/* Contenido */}
+      <main className="flex-1 p-16">
+        {view === 'inventory' && (
+          <div className="max-w-4xl space-y-12">
+            <form onSubmit={handleAddProduct} className="bg-[#35382d] p-8 rounded border border-[#454a3b] space-y-4">
+              <h3 className="font-serif text-lg">Nuevo Producto</h3>
+              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-2 border border-[#454a3b]" required />
+              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-2 border border-[#454a3b]" required />
+              <input type="file" name="image" className="text-sm" />
+              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-6 py-2 font-bold hover:opacity-90">GUARDAR</button>
+            </form>
+            <div className="grid gap-4">
+              {productos.map(p => (
+                <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-4 rounded border border-[#454a3b]">
+                  <span>{p.name} - ${p.price}</span>
+                  <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs uppercase">Eliminar</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {view === 'orders' && (
+          <div className="bg-[#35382d] p-8 rounded border border-[#454a3b]">
+            <table className="w-full text-left">
+              <thead><tr className="border-b border-[#454a3b] text-[#8c9284]"><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
+              <tbody>
+                {pedidos.map(o => <tr key={o.id} className="border-b border-[#454a3b] h-12"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {view === 'metrics' && (
+          <div className="h-96 bg-[#35382d] p-8 rounded border border-[#454a3b]">
+            <h3 className="font-serif text-lg mb-6">Tendencia de Ventas</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={pedidos}>
+                <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
+                <XAxis stroke="#8c9284" dataKey="cliente" />
+                <YAxis stroke="#8c9284" />
+                <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b' }} />
+                <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </main>
-    </div>
-  );
-}
-
-// Componentes modulares para mantener el orden y la calidad visual
-function InventorySection() {
-  return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-serif mb-6">Inventario</h2>
-      <div className="bg-[#35382d] p-6 rounded-lg border border-[#454a3b]">
-        {/* Aquí iría el formulario con el input de imagen que definimos */}
-        <p className="text-[#a8ad9e]">Panel de carga de nuevos productos...</p>
-      </div>
-    </div>
-  );
-}
-
-function MetricsSection() {
-  const data = [{name: 'Lun', ventas: 400}, {name: 'Mar', ventas: 700}, {name: 'Mié', ventas: 500}];
-  return (
-    <div>
-      <h2 className="text-2xl font-serif mb-8">Métricas de Venta</h2>
-      <div className="h-64 bg-[#35382d] p-6 rounded-lg border border-[#454a3b]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <XAxis dataKey="name" stroke="#8c9284" />
-            <Tooltip contentStyle={{ backgroundColor: '#2D3025', border: '1px solid #454a3b' }} />
-            <Line type="monotone" dataKey="ventas" stroke="#EAE6D6" strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-function OrdersSection() {
-  return (
-    <div>
-      <h2 className="text-2xl font-serif mb-6">Pedidos Recientes</h2>
-      <div className="bg-[#35382d] rounded-lg border border-[#454a3b] p-6">
-        {/* Tabla estilizada */}
-        <p className="text-[#a8ad9e]">Lista de pedidos en tiempo real...</p>
-      </div>
     </div>
   );
 }

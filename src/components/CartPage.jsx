@@ -1,11 +1,11 @@
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
-import { Trash2, ShieldCheck, Truck, Minus, Plus } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity } = useCart();
   
-  // EL TOTAL AHORA ES REACTIVO: Se recalcula automáticamente al cambiar 'cart'
+  // El cálculo es reactivo: se recalcula siempre que 'cart' cambie
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   const handleCheckout = () => {
@@ -30,20 +30,20 @@ export default function CartPage() {
       <h1 className="text-4xl font-serif font-bold text-rincon-cream mb-12 text-center">Tu Pedido</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+        {/* Lista de productos */}
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
             <div key={item.id} className="flex items-center justify-between p-6 bg-rincon-cream/5 rounded-2xl border border-rincon-cream/10">
               <div className="flex items-center gap-6">
-                <img src={item.image_url} alt={item.name} className="w-24 h-24 object-cover rounded-xl" />
+                <img src={item.image_url} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
                 <div>
-                  <h3 className="font-bold text-xl text-rincon-cream">{item.name}</h3>
+                  <h3 className="font-bold text-lg text-rincon-cream">{item.name}</h3>
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3 bg-rincon-cream/10 rounded-lg p-2">
-                  {/* Aquí está el cambio: llamamos a la función con el delta */}
                   <button onClick={() => updateQuantity(item.id, -1)}><Minus size={16} /></button>
-                  <span className="font-bold">{item.quantity}</span>
+                  <span className="font-bold w-8 text-center">{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.id, 1)}><Plus size={16} /></button>
                 </div>
                 <span className="font-bold text-lg text-rincon-cream w-24 text-right">${item.price * item.quantity}</span>
@@ -53,15 +53,15 @@ export default function CartPage() {
           ))}
         </div>
 
+        {/* Resumen */}
         <div className="lg:col-span-1">
           <div className="bg-rincon-cream/5 p-8 rounded-3xl border border-rincon-cream/10 sticky top-24">
-            <h2 className="text-2xl font-serif text-rincon-cream mb-6">Sumario de pedido</h2>
+            <h2 className="text-2xl font-serif text-rincon-cream mb-6">Sumario</h2>
             <div className="flex justify-between text-2xl font-bold text-rincon-cream border-t border-rincon-cream/10 pt-4 mb-6">
               <span>Total</span><span>${total}</span>
             </div>
-            
-            <button onClick={handleCheckout} className="w-full bg-rincon-cream text-rincon-olive py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all mb-4">
-              FINALIZAR COMPRA
+            <button onClick={handleCheckout} className="w-full bg-rincon-cream text-rincon-olive py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all">
+              FINALIZAR COMPRA <ArrowRight size={20} className="inline ml-2" />
             </button>
           </div>
         </div>

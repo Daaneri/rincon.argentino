@@ -28,21 +28,17 @@ export function CartProvider({ children }) {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
-  // NUEVA FUNCIÓN: Maneja los botones + y -
   const updateQuantity = (productId, delta) => {
     setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (item.id === productId) {
-          const newQuantity = Math.max(1, item.quantity + delta); // No permite bajar de 1
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
+      prevCart
+        .map((item) => 
+          item.id === productId ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0) // Si la cantidad es 0, se elimina
     );
   };
 
   return (
-    // Asegúrate de incluir 'updateQuantity' aquí abajo
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity }}>
       {children}
     </CartContext.Provider>

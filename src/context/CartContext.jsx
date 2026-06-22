@@ -3,13 +3,11 @@ import { createContext, useState, useContext, useEffect } from 'react';
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-  // Inicializamos el estado intentando leer de localStorage
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('rincon_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // Guardamos en localStorage cada vez que el carrito cambia
   useEffect(() => {
     localStorage.setItem('rincon_cart', JSON.stringify(cart));
   }, [cart]);
@@ -30,8 +28,22 @@ export function CartProvider({ children }) {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
+  // NUEVA FUNCIÓN: Maneja los botones + y -
+  const updateQuantity = (productId, delta) => {
+    setCart((prevCart) =>
+      prevCart.map((item) => {
+        if (item.id === productId) {
+          const newQuantity = Math.max(1, item.quantity + delta); // No permite bajar de 1
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      })
+    );
+  };
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart }}>
+    // Asegúrate de incluir 'updateQuantity' aquí abajo
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity }}>
       {children}
     </CartContext.Provider>
   );

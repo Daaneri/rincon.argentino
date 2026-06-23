@@ -8,7 +8,10 @@ export default function AdminDashboard() {
   const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
+  const [editId, setEditId] = useState(null);
+  const [editData, setEditData] = useState({ name: '', price: '' });
   const navigate = useNavigate();
 
   useEffect(() => { fetchData(); }, []);
@@ -20,6 +23,7 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
+  // --- CRUD: CREAR ---
   async function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
@@ -27,20 +31,28 @@ export default function AdminDashboard() {
     const name = formData.get('name');
     const price = parseFloat(formData.get('price'));
     const category = formData.get('category');
-    const file = formData.get('image');
     
     let imageUrl = '';
-    if (file && file.size > 0) {
-        const { data } = await supabase.storage.from('productos').upload(`${Date.now()}`, file);
+    if (file) {
+        const { data } = await supabase.storage.from('productos').upload(`${Date.now()}_${file.name}`, file);
         imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
     }
 
     await supabase.from('productos').insert([{ name, price, category, image_url: imageUrl }]);
+    setFile(null);
     e.target.reset();
     fetchData();
     setLoading(false);
   }
 
+  // --- CRUD: ACTUALIZAR ---
+  async function handleUpdate(id) {
+    await supabase.from('productos').update(editData).eq('id', id);
+    setEditId(null);
+    fetchData();
+  }
+
+  // --- CRUD: ELIMINAR ---
   async function handleDelete(id) {
     await supabase.from('productos').delete().eq('id', id);
     fetchData();
@@ -65,40 +77,48 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="flex-1 p-16">
+        {/* VISTA INVENTARIO (CRUD) */}
         {view === 'inventory' && (
           <div className="max-w-4xl space-y-8">
             <form onSubmit={handleAddProduct} className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b] space-y-4">
               <h3 className="text-xl mb-4">Nuevo Producto</h3>
-              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]" required />
-              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]" required />
-              <select name="category" className="w-full bg-[#2D3025] p-3 rounded-lg border border-[#454a3b]">
+              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
+              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
+              <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6">
                 <option value="Mates">Mates</option>
                 <option value="Yerbas">Yerbas</option>
                 <option value="Bombillas">Bombillas</option>
                 <option value="Accesorios">Accesorios</option>
               </select>
               <div className="flex items-center gap-4">
-                <label className="cursor-pointer bg-[#2D3025] border border-[#454a3b] px-4 py-2 rounded-lg text-sm hover:bg-[#3d4234] transition">
-                  SELECCIONAR FOTO <input type="file" name="image" className="hidden" />
+                <label className="cursor-pointer bg-[#2D3025] border border-[#454a3b] px-6 py-2 rounded-full text-sm">
+                  {file ? file.name : "SELECCIONAR FOTO"}
+                  <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
                 </label>
-                <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-lg font-bold hover:opacity-90">GUARDAR</button>
+                <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-full font-bold">GUARDAR</button>
               </div>
             </form>
 
             <div className="flex gap-2 mb-4">
               {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
-                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-4 py-1 rounded-full text-sm ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>
-                  {cat}
-                </button>
+                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-6 py-1 rounded-full text-sm ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
               ))}
             </div>
 
             <div className="space-y-4">
               {productosFiltrados.map(p => (
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
-                  <span>{p.name} - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</span>
+                  {editId === p.id ? (
+                    <div className="flex gap-2 w-full">
+                      <input className="bg-[#2D3025] px-3 rounded-full border border-[#454a3b]" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                      <input className="bg-[#2D3025] px-3 rounded-full border border-[#454a3b]" defaultValue={p.price} onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                      <button onClick={() => handleUpdate(p.id)} className="text-green-400 text-xs uppercase">Ok</button>
+                    </div>
+                  ) : (
+                    <span>{p.name} - ${p.price}</span>
+                  )}
                   <div className="flex gap-4">
-                    <button onClick={() => navigator.clipboard.writeText(p.id)} className="text-xs uppercase opacity-50">ID</button>
+                    <button onClick={() => setEditId(p.id)} className="text-blue-400 text-xs uppercase">Editar</button>
                     <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs uppercase underline">Eliminar</button>
                   </div>
                 </div>
@@ -107,6 +127,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* VISTA ÓRDENES */}
         {view === 'orders' && (
           <div className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
             <table className="w-full text-left">
@@ -118,6 +139,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* VISTA MÉTRICAS */}
         {view === 'metrics' && (
           <div className="h-96 bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
             <h3 className="text-xl mb-6">Tendencia de Ventas</h3>

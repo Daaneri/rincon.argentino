@@ -45,11 +45,16 @@ export default function AdminDashboard() {
   }
 
   async function handleUpdate(id) {
+    // Usamos editData directamente del estado
     const { error } = await supabase.from('productos')
       .update({ name: editData.name, price: parseFloat(editData.price) })
       .eq('id', id);
-    if (error) alert("Error: " + error.message);
-    else { setEditId(null); fetchData(); }
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      setEditId(null);
+      fetchData();
+    }
   }
 
   async function handleDelete(id) {
@@ -104,8 +109,8 @@ export default function AdminDashboard() {
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
                     <div className="flex gap-2 w-full">
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" defaultValue={p.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
                       <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs">OK</button>
                     </div>
                   ) : (

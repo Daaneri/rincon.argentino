@@ -23,6 +23,7 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
+  // --- CRUD: CREAR ---
   async function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
@@ -44,16 +45,26 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
+  // --- CRUD: ACTUALIZAR ---
   async function handleUpdate(id) {
-    await supabase.from('productos').update(editData).eq('id', id);
-    setEditId(null);
-    fetchData();
+    const { error } = await supabase.from('productos')
+      .update({ name: editData.name, price: parseFloat(editData.price) })
+      .eq('id', id);
+      
+    if (error) {
+      alert("Error al actualizar: " + error.message);
+    } else {
+      setEditId(null);
+      fetchData();
+    }
   }
 
+  // --- CRUD: ELIMINAR ---
   async function handleDelete(id) {
-    if (!window.confirm("¿Eliminar producto?")) return;
-    await supabase.from('productos').delete().eq('id', id);
-    fetchData();
+    if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
+    const { error } = await supabase.from('productos').delete().eq('id', id);
+    if (error) alert("Error al eliminar: " + error.message);
+    else fetchData();
   }
 
   const productosFiltrados = categoriaFiltro === 'Todos' 
@@ -71,7 +82,6 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-xs text-[#5c6356] uppercase tracking-widest">Cerrar sesión</button>
       </aside>
 
       <main className="flex-1 p-16">
@@ -87,37 +97,25 @@ export default function AdminDashboard() {
                 <option value="Bombillas">Bombillas</option>
                 <option value="Accesorios">Accesorios</option>
               </select>
-              <div className="flex items-center gap-4">
-                <label className="cursor-pointer bg-[#2D3025] border border-[#454a3b] px-6 py-2 rounded-full text-sm">
-                  {file ? file.name : "SELECCIONAR FOTO"}
-                  <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
-                </label>
-                <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-full font-bold">GUARDAR</button>
-              </div>
+              <button className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-full font-bold">GUARDAR</button>
             </form>
-
-            <div className="flex gap-2 mb-4">
-              {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
-                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-6 py-1 rounded-full text-sm ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
-              ))}
-            </div>
 
             <div className="space-y-4">
               {productosFiltrados.map(p => (
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
                     <div className="flex gap-2 w-full">
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] text-sm" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] text-sm w-24" defaultValue={p.price} type="number" onChange={(e) => setEditData({...editData, price: parseFloat(e.target.value)})} />
-                      <button onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs uppercase font-bold">Ok</button>
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" defaultValue={p.price} onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                      <button onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs">OK</button>
                     </div>
                   ) : (
-                    <span>{p.name} – ${p.price}</span>
+                    <span>{p.name} - ${p.price}</span>
                   )}
                   {editId !== p.id && (
                     <div className="flex gap-2">
-                      <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs uppercase hover:bg-[#454a3b]">Editar</button>
-                      <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs uppercase hover:bg-[#454a3b]">Eliminar</button>
+                      <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs hover:bg-[#454a3b]">Editar</button>
+                      <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs hover:bg-[#454a3b]">Eliminar</button>
                     </div>
                   )}
                 </div>

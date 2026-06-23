@@ -54,8 +54,14 @@ export default function AdminDashboard() {
 
   // --- CRUD: ELIMINAR ---
   async function handleDelete(id) {
-    await supabase.from('productos').delete().eq('id', id);
-    fetchData();
+    // Forzamos el reseteo del ID de edición por si estaba abierto en ese producto
+    setEditId(null); 
+    const { error } = await supabase.from('productos').delete().eq('id', id);
+    if (error) {
+      console.error("Error al eliminar:", error.message);
+    } else {
+      fetchData();
+    }
   }
 
   const productosFiltrados = categoriaFiltro === 'Todos' 
@@ -99,28 +105,45 @@ export default function AdminDashboard() {
               </div>
             </form>
 
+            {/* FILTROS DE CATEGORÍA */}
             <div className="flex gap-2 mb-4">
               {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
                 <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-6 py-1 rounded-full text-sm ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
               ))}
             </div>
 
+            {/* LISTADO DE PRODUCTOS */}
             <div className="space-y-4">
               {productosFiltrados.map(p => (
                 <div key={p.id} className="flex justify-between items-center bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
                     <div className="flex gap-2 w-full">
-                      <input className="bg-[#2D3025] px-3 rounded-full border border-[#454a3b]" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-3 rounded-full border border-[#454a3b]" defaultValue={p.price} onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                      <button onClick={() => handleUpdate(p.id)} className="text-green-400 text-xs uppercase">Ok</button>
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] text-sm" defaultValue={p.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] text-sm w-24" defaultValue={p.price} type="number" onChange={(e) => setEditData({...editData, price: parseFloat(e.target.value)})} />
+                      <button onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs uppercase font-bold hover:bg-green-700 transition">Ok</button>
+                      <button onClick={() => setEditId(null)} className="bg-[#2D3025] text-[#8c9284] px-4 py-1 rounded-full text-xs uppercase hover:text-white transition">Cancelar</button>
                     </div>
                   ) : (
-                    <span>{p.name} - ${p.price}</span>
+                    <span className="text-lg">{p.name} – ${p.price}</span>
                   )}
-                  <div className="flex gap-4">
-                    <button onClick={() => setEditId(p.id)} className="text-blue-400 text-xs uppercase">Editar</button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs uppercase underline">Eliminar</button>
-                  </div>
+                  
+                  {/* BOTONES REDONDOS ESTILO PILL */}
+                  {editId !== p.id && (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price }); }} 
+                        className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs uppercase tracking-wider hover:bg-[#454a3b] hover:text-blue-300 transition"
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(p.id)} 
+                        className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs uppercase tracking-wider hover:bg-red-950/40 hover:text-red-300 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

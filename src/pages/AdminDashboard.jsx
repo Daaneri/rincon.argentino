@@ -89,7 +89,7 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <button onClick={() => { supabase.auth.signOut(); navigate('/login'); }} className="text-xs text-[#5c6356] uppercase tracking-widest">Cerrar sesión</button>
+        <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
       </aside>
 
       <main className="flex-1 p-16">

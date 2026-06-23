@@ -45,19 +45,23 @@ export default function AdminDashboard() {
   }
 
   async function handleUpdate(id) {
-    console.log("Iniciando actualización para ID:", id); // LOG DE CONTROL
-    const numericPrice = Number(editData.price);
+    console.log("Intentando actualizar ID:", id, "con datos:", editData);
     
-    const { error } = await supabase
+    // Usamos .select() para forzar a Supabase a devolver el registro actualizado
+    const { data, error } = await supabase
       .from('productos')
-      .update({ name: editData.name, price: numericPrice })
-      .eq('id', id);
+      .update({ name: editData.name, price: Number(editData.price) })
+      .eq('id', id)
+      .select(); 
     
     if (error) {
-      console.error("Error al actualizar en Supabase:", error);
+      console.error("ERROR DE SUPABASE:", error);
       alert("Error en la base de datos: " + error.message);
+    } else if (!data || data.length === 0) {
+      console.error("No se actualizó nada. Revisa las políticas RLS en Supabase.");
+      alert("Error: Supabase no permitió la actualización. Revisa las políticas RLS.");
     } else {
-      console.log("Éxito al actualizar");
+      console.log("Éxito. Registro actualizado:", data);
       setEditId(null);
       await fetchData(); 
     }
@@ -117,7 +121,6 @@ export default function AdminDashboard() {
                     <div className="flex gap-2 w-full">
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" value={editData.price} type="number" step="any" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                      {/* CAMBIO: Se agregó explícitamente type="button" */}
                       <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
                     </div>
                   ) : (

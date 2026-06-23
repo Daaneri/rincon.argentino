@@ -17,13 +17,8 @@ export default function AdminDashboard() {
   useEffect(() => { fetchData(); }, []);
 
   async function fetchData() {
-    // CORRECCIÓN: Asegúrate de que las tablas se llamen 'productos' y 'orders' en Supabase
-    const { data: p, error: pError } = await supabase.from('productos').select('*');
-    const { data: o, error: oError } = await supabase.from('orders').select('*');
-    
-    if (pError) console.error("Error cargando productos:", pError);
-    if (oError) console.error("Error cargando orders:", oError);
-    
+    const { data: p } = await supabase.from('productos').select('*');
+    const { data: o } = await supabase.from('orders').select('*');
     setProductos(p || []);
     setPedidos(o || []);
   }
@@ -50,12 +45,16 @@ export default function AdminDashboard() {
   }
 
   async function handleUpdate(id) {
-    // Aseguramos que el precio sea número antes de enviar
-    const { error } = await supabase.from('productos')
-      .update({ name: editData.name, price: Number(editData.price) })
+    // Conversión segura a número
+    const priceValue = Number(editData.price);
+    
+    const { error } = await supabase
+      .from('productos')
+      .update({ name: editData.name, price: priceValue })
       .eq('id', id);
     
     if (error) {
+      console.error("Error al actualizar:", error);
       alert("Error al actualizar: " + error.message);
     } else {
       setEditId(null);
@@ -94,7 +93,7 @@ export default function AdminDashboard() {
             <form onSubmit={handleAddProduct} className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b] space-y-4">
               <h3 className="text-xl mb-4">Nuevo Producto</h3>
               <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
-              <input name="price" type="number" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
+              <input name="price" type="number" step="any" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
               <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6">
                 <option value="Mates">Mates</option>
                 <option value="Yerbas">Yerbas</option>
@@ -116,7 +115,7 @@ export default function AdminDashboard() {
                   {editId === p.id ? (
                     <div className="flex gap-2 w-full">
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" value={editData.price} type="number" step="any" onChange={(e) => setEditData({...editData, price: e.target.value})} />
                       <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
                     </div>
                   ) : (

@@ -45,20 +45,19 @@ export default function AdminDashboard() {
   }
 
   async function handleUpdate(id) {
-    // Conversión segura a número
-    const priceValue = Number(editData.price);
+    const numericPrice = Number(editData.price);
     
     const { error } = await supabase
       .from('productos')
-      .update({ name: editData.name, price: priceValue })
+      .update({ name: editData.name, price: numericPrice })
       .eq('id', id);
     
     if (error) {
       console.error("Error al actualizar:", error);
-      alert("Error al actualizar: " + error.message);
+      alert("Error en la base de datos: " + error.message);
     } else {
       setEditId(null);
-      fetchData();
+      await fetchData(); // Recarga obligatoria de datos
     }
   }
 
@@ -132,31 +131,31 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
+        
+        {/* ... (resto del componente orders y metrics igual que antes) */}
         {view === 'orders' && (
-          <div className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
-            <table className="w-full text-left">
-              <thead><tr className="border-b border-[#454a3b] text-[#8c9284]"><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
-              <tbody>
-                {pedidos.map(o => <tr key={o.id} className="h-16"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}
-              </tbody>
-            </table>
-          </div>
+           <div className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
+             <table className="w-full text-left">
+               <thead><tr className="border-b border-[#454a3b] text-[#8c9284]"><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
+               <tbody>
+                 {pedidos.map(o => <tr key={o.id} className="h-16"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}
+               </tbody>
+             </table>
+           </div>
         )}
-
         {view === 'metrics' && (
-          <div className="h-96 bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
-            <h3 className="text-xl mb-6">Tendencia de Ventas</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={pedidos}>
-                <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
-                <XAxis stroke="#8c9284" dataKey="cliente" />
-                <YAxis stroke="#8c9284" />
-                <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '1rem' }} />
-                <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+           <div className="h-96 bg-[#35382d] p-8 rounded-2xl border border-[#454a3b]">
+             <h3 className="text-xl mb-6">Tendencia de Ventas</h3>
+             <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={pedidos}>
+                 <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
+                 <XAxis stroke="#8c9284" dataKey="cliente" />
+                 <YAxis stroke="#8c9284" />
+                 <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '1rem' }} />
+                 <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={2} />
+               </LineChart>
+             </ResponsiveContainer>
+           </div>
         )}
       </main>
     </div>

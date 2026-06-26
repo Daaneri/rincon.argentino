@@ -14,25 +14,26 @@ import FloatingCart from './components/FloatingCart';
 
 // Componentes Administrativos
 import AdminDashboard from './pages/AdminDashboard'; 
-import Login from './pages/Login'; // <--- Importa tu Login aquí
+import Login from './pages/Login'; 
 
 function App() {
   return (
     <CartProvider>
       <Router>
         <Routes>
-          {/* RUTAS ADMINISTRATIVAS (Sin Navbar ni Footer de tienda) */}
+          {/* RUTAS ADMINISTRATIVAS */}
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
 
-          {/* RUTAS PÚBLICAS (Con estructura completa) */}
+          {/* RUTAS PÚBLICAS */}
           <Route path="*" element={
             <div className="min-h-screen flex flex-col font-sans bg-[#2D3025] text-[#E6DCC8] selection:bg-[#E6DCC8] selection:text-[#2D3025]">
               <Toaster position="bottom-right" richColors />
               <Navbar />
               <FloatingCart />
               
-              <a href="https://wa.me/541134703230" target="_blank" rel="noopener noreferrer"
+              {/* Botón flotante actualizado */}
+              <a href="https://wa.me/5491133962727" target="_blank" rel="noopener noreferrer"
                 className="fixed bottom-24 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all duration-300">
                 <MessageCircle size={24} />
               </a>
@@ -42,7 +43,7 @@ function App() {
                   <Route path="/" element={
                     <div className="flex flex-col">
                       <section className="py-24 md:py-40 px-6 text-center border-b border-[#E6DCC8]/5">
-                        <h1 className="text-5xl md:text-8xl font-serif font-bold tracking-tighter mb-8 text-[#E6DCC8]">RINCÓN ARGENTINO</h1>
+                        <h1 className="text-5xl md:text-8xl font-serif font-bold tracking-tighter mb-8 text-[#E6DCC8]">RINCON ARGENTINOO</h1>
                         <div className="flex justify-center items-center gap-4">
                           <div className="h-px w-12 bg-[#E6DCC8]/30"></div>
                           <p className="text-sm md:text-base font-light tracking-[0.4em] uppercase text-[#E6DCC8]/60">Artesanías auténticas con alma</p>

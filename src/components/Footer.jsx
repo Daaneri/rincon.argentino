@@ -25,6 +25,9 @@ export default function Footer() {
 
         <div className="flex flex-col gap-2 md:items-end">
           <p className="text-sm text-[#E6DCC8]/50">© 2026 rincon.argentinoo.</p>
+          <p className="text-xs text-[#E6DCC8]/30 mt-1">
+  Hecho por <a href="https://www.instagram.com/desarrollando.andoo/" target="_blank" rel="noopener noreferrer" className="hover:text-[#E6DCC8] underline transition-colors">Desarrollando.andoo</a>
+</p>
         </div>
         
       </div>

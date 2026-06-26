@@ -44,26 +44,26 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
-  async function handleUpdate(id) {
-    console.log("Intentando actualizar ID:", id, "con datos:", editData);
-    
-    // Usamos .select() para forzar a Supabase a devolver el registro actualizado
+  async function handleUpdate(product) {
+    // Enviamos el objeto completo para asegurar integridad en Supabase
     const { data, error } = await supabase
       .from('productos')
-      .update({ name: editData.name, price: Number(editData.price) })
-      .eq('id', id)
-      .select(); 
-    
+      .update({ 
+        name: editData.name, 
+        price: editData.price.toString(), 
+        category: product.category,
+        image_url: product.image_url || ''
+      })
+      .eq('id', product.id)
+      .select();
+
     if (error) {
-      console.error("ERROR DE SUPABASE:", error);
-      alert("Error en la base de datos: " + error.message);
-    } else if (!data || data.length === 0) {
-      console.error("No se actualizó nada. Revisa las políticas RLS en Supabase.");
-      alert("Error: Supabase no permitió la actualización. Revisa las políticas RLS.");
+      console.error("ERROR:", error);
+      alert("Error al actualizar: " + error.message);
     } else {
-      console.log("Éxito. Registro actualizado:", data);
+      console.log("Actualización exitosa:", data);
       setEditId(null);
-      await fetchData(); 
+      await fetchData();
     }
   }
 
@@ -89,7 +89,6 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
       </aside>
 
       <main className="flex-1 p-16">
@@ -121,7 +120,7 @@ export default function AdminDashboard() {
                     <div className="flex gap-2 w-full">
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b]" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-24" value={editData.price} type="number" step="any" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                      <button type="button" onClick={() => handleUpdate(p.id)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
+                      <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
                     </div>
                   ) : (
                     <>
@@ -142,7 +141,7 @@ export default function AdminDashboard() {
              <table className="w-full text-left">
                <thead><tr className="border-b border-[#454a3b] text-[#8c9284]"><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
                <tbody>
-                 {pedidos.map(o => <tr key={o.id} className="h-16"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}
+                  {pedidos.map(o => <tr key={o.id} className="h-16"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}
                </tbody>
              </table>
            </div>

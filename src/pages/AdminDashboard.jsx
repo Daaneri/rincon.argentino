@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
-  const [view, setView] = useState('inventory');
+  const [view, setView] = useState('Inventario');
   const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -97,8 +97,8 @@ export default function AdminDashboard() {
       <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#3d4234] p-6 flex flex-col">
         <h1 className="text-2xl mb-6 md:mb-12 italic">Rincón Admin</h1>
         <nav className="flex md:flex-col gap-4 md:space-y-6 flex-grow overflow-x-auto pb-2">
-          {['inventory', 'orders', 'metrics'].map(item => (
-            <button key={item} onClick={() => setView(item)} className={`capitalize transition whitespace-nowrap ${view === item ? 'text-white font-bold' : 'text-[#8c9284] hover:text-white'}`}>
+          {['Inventario', 'Pedidos', 'Métricas'].map(item => (
+            <button key={item} onClick={() => setView(item)} className={`transition whitespace-nowrap ${view === item ? 'text-white font-bold' : 'text-[#8c9284] hover:text-white'}`}>
               {item}
             </button>
           ))}
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
       <main className="flex-1 p-6 md:p-16">
         {mensaje && <div className="bg-green-700 text-white p-3 rounded-xl mb-4 text-center animate-pulse">{mensaje}</div>}
 
-        {view === 'inventory' && (
+        {view === 'Inventario' && (
           <div className="max-w-4xl space-y-8">
             <form onSubmit={handleAddProduct} className="bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b] space-y-4">
               <h3 className="text-xl mb-4">Nuevo Producto</h3>
@@ -150,17 +150,19 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <>
-                      <span className={`truncate flex-1 ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "" }`}>
+                      <span className={`truncate flex-1 font-bold text-lg ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#EAE6D6]" }`}>
                         {p.name}
                       </span>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-sm ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "text-gray-400" }`}>
-                          Stock: {p.stock ?? 0}
+                      <div className="flex items-center gap-6">
+                        <span className={`font-bold ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#8c9284]" }`}>
+                          Stock: <span className="text-white">{p.stock ?? 0}</span>
                         </span>
-                        <span className="font-bold text-lg">${p.price}</span>
-                        <div className="flex gap-2">
-                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
-                          <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs">Eliminar</button>
+                        <span className="font-bold text-xl text-white tracking-wide">
+                          ${p.price}
+                        </span>
+                        <div className="flex gap-3">
+                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-sm">Editar</button>
+                          <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-sm">Eliminar</button>
                         </div>
                       </div>
                     </>
@@ -171,25 +173,43 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {view === 'orders' && (
-           <div className="bg-[#35382d] p-4 md:p-8 rounded-2xl border border-[#454a3b] overflow-x-auto">
+        {view === 'Pedidos' && (
+           <div className="bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b] overflow-x-auto">
              <table className="w-full text-left min-w-[500px]">
-               <thead><tr className="border-b border-[#454a3b] text-[#8c9284]"><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
-               <tbody>{pedidos.map(o => <tr key={o.id} className="h-16"><td>{o.cliente}</td><td>${o.total}</td><td>{o.estado}</td></tr>)}</tbody>
+               <thead>
+                 <tr className="border-b border-[#454a3b] text-[#EAE6D6]">
+                   <th className="pb-4 font-bold">Cliente</th>
+                   <th className="pb-4 font-bold">Total</th>
+                   <th className="pb-4 font-bold">Estado</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-[#454a3b]">
+                 {pedidos.map(o => (
+                   <tr key={o.id} className="h-16 text-[#EAE6D6]">
+                     <td className="font-medium">{o.cliente}</td>
+                     <td className="font-bold text-white">${o.total}</td>
+                     <td>
+                       <span className="bg-[#2D3025] px-3 py-1 rounded-full text-xs border border-[#454a3b]">
+                         {o.estado}
+                       </span>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
              </table>
            </div>
         )}
 
-        {view === 'metrics' && (
-           <div className="h-80 md:h-96 bg-[#35382d] p-4 md:p-8 rounded-2xl border border-[#454a3b]">
-             <h3 className="text-xl mb-6">Tendencia de Ventas</h3>
+        {view === 'Métricas' && (
+           <div className="h-96 bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b]">
+             <h3 className="text-xl font-bold text-white mb-6">Tendencia de Ventas</h3>
              <ResponsiveContainer width="100%" height="100%">
                <LineChart data={pedidos}>
                  <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
-                 <XAxis stroke="#8c9284" dataKey="cliente" />
-                 <YAxis stroke="#8c9284" />
-                 <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '1rem' }} />
-                 <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={2} />
+                 <XAxis stroke="#8c9284" dataKey="cliente" tick={{fontSize: 12, fill: '#8c9284'}} />
+                 <YAxis stroke="#8c9284" tick={{fontSize: 12, fill: '#8c9284'}} />
+                 <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '0.75rem', color: '#EAE6D6' }} />
+                 <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={3} dot={{ r: 4, fill: '#EAE6D6' }} activeDot={{ r: 6, fill: '#fff' }} />
                </LineChart>
              </ResponsiveContainer>
            </div>

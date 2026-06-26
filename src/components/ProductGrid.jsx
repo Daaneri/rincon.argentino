@@ -76,39 +76,40 @@ export default function ProductGrid() {
         </div>
       </div>
 
-      {/* Grid de Productos - Ajustado para que se vean grandes y 2 por fila en móvil */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 max-w-7xl mx-auto px-6">
+      {/* Grid de Productos: 2 columnas en móvil, 4 en escritorio */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto px-4">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div 
               key={product.id} 
-              className="group bg-rincon-olive/40 backdrop-blur-md p-6 rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col"
+              className="group bg-rincon-olive/40 backdrop-blur-md p-3 md:p-6 rounded-2xl md:rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col"
             >
-              <div className="aspect-square bg-rincon-cream/10 rounded-2xl mb-6 overflow-hidden">
+              {/* Imagen con ratio 4/5 para un look profesional */}
+              <div className="aspect-[4/5] bg-rincon-cream/10 rounded-xl md:rounded-2xl mb-4 md:mb-6 overflow-hidden">
                   {product.image_url ? (
                     <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"/>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-rincon-cream/20 uppercase tracking-widest text-sm">Sin imagen</div>
+                    <div className="flex items-center justify-center h-full text-rincon-cream/20 uppercase tracking-widest text-xs">Sin imagen</div>
                   )}
               </div>
               
-              <div className="px-1 pb-2 flex-1 flex flex-col">
-                  <h3 className="text-xl font-serif font-bold text-rincon-cream mb-2 truncate">{product.name}</h3>
-                  <p className="text-xl font-medium text-rincon-cream/80 mb-8">${product.price.toLocaleString('es-AR')}</p>
-                  
-                  <div className="mt-auto">
-                    <Link to={`/producto/${product.id}`} className="block">
-                      <button className="w-full border border-rincon-cream/20 py-4 rounded-xl font-bold text-sm uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
-                          Ver detalle
-                      </button>
-                    </Link>
+              <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm md:text-xl font-serif font-bold text-rincon-cream mb-1 truncate">{product.name}</h3>
+                    <p className="text-sm md:text-lg font-medium text-rincon-cream/80 mb-4">${product.price.toLocaleString('es-AR')}</p>
                   </div>
+                  
+                  <Link to={`/producto/${product.id}`} className="block">
+                    <button className="w-full border border-rincon-cream/20 py-2 md:py-4 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
+                        Ver detalle
+                    </button>
+                  </Link>
               </div>
             </div>
           ))
         ) : (
           <div className="col-span-full py-20 text-center text-rincon-cream/50 italic">
-            No encontramos piezas con ese nombre o categoría. ¡Intentá con otra búsqueda!
+            No encontramos piezas con ese nombre o categoría.
           </div>
         )}
       </div>

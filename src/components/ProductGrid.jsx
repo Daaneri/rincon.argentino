@@ -77,8 +77,8 @@ export default function ProductGrid() {
       </div>
 
       {/* Grid de Productos con manejo de estado vacío */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 max-w-6xl mx-auto">
-        {filteredProducts.length > 0 ? (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto">
+           {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div 
               key={product.id} 
@@ -93,7 +93,7 @@ export default function ProductGrid() {
               </div>
               
               <div className="px-2 pb-2">
-                  <h3 className="text-xl font-serif font-bold text-rincon-cream mb-1">{product.name}</h3>
+                 <h3 className="text-lg font-serif font-bold text-rincon-cream mb-1 truncate">{product.name}</h3>
                   <p className="text-lg font-medium text-rincon-cream/80 mb-6">${product.price.toLocaleString('es-AR')}</p>
                   <Link to={`/producto/${product.id}`} className="block">
                   <button className="w-full border border-rincon-cream/20 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">

@@ -10,8 +10,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
-  const [busqueda, setBusqueda] = useState(''); // Mejora 1
-  const [mensaje, setMensaje] = useState(''); // Mejora 3
+  const [busqueda, setBusqueda] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({ name: '', price: '', stock: 0 });
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   async function handleUpdate(product) {
     const idNumerico = parseInt(product.id, 10);
     const { error } = await supabase.from('productos')
-      .update({ name: editData.name, price: editData.price.toString(), stock: editData.stock, category: product.category, image_url: product.image_url })
+      .update({ name: editData.name, price: editData.price.toString(), stock: parseInt(editData.stock), category: product.category, image_url: product.image_url })
       .eq('id', idNumerico);
 
     if (error) mostrarMensaje("Error al actualizar: " + error.message);
@@ -140,19 +140,28 @@ export default function AdminDashboard() {
               {productosFiltrados.map(p => (
                 <div key={p.id} className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
-                    <div className="flex gap-2 w-full">
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] flex-1" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-20" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                      <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
+                    <div className="flex flex-col md:flex-row gap-2 w-full">
+                      <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] flex-1" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                      <div className="flex gap-2">
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
+                        <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold">OK</button>
+                      </div>
                     </div>
                   ) : (
                     <>
-                     <span className={(p.stock ?? 0) < 5 ? "text-red-400 font-bold" : ""}>
-  {p.name} - ${p.price} {(p.stock ?? 0) < 5 && `(Stock: ${p.stock ?? 0})`}
-</span>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
-                        <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs">Eliminar</button>
+                      <span className={`truncate max-w-[40%] ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "" }`}>
+                        {p.name}
+                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold">${p.price}</span>
+                        <span className={`text-sm ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-gray-400" }`}>
+                          Stock: {p.stock ?? 0}
+                        </span>
+                        <div className="flex gap-2">
+                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
+                          <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs">Eliminar</button>
+                        </div>
                       </div>
                     </>
                   )}

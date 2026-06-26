@@ -140,24 +140,24 @@ export default function AdminDashboard() {
               {productosFiltrados.map(p => (
                 <div key={p.id} className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
-                    <div className="flex flex-col md:flex-row gap-2 w-full">
+                    <div className="flex flex-col md:flex-row gap-2 w-full items-center">
                       <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] flex-1" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
                       <div className="flex gap-2">
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" placeholder="Stock" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" placeholder="Precio" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
                         <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold">OK</button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <span className={`truncate max-w-[40%] ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "" }`}>
+                      <span className={`truncate flex-1 ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "" }`}>
                         {p.name}
                       </span>
                       <div className="flex items-center gap-4">
-                        <span className="font-bold">${p.price}</span>
-                        <span className={`text-sm ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-gray-400" }`}>
+                        <span className={`text-sm ${ (p.stock ?? 0) < 5 ? "text-red-400 font-bold" : "text-gray-400" }`}>
                           Stock: {p.stock ?? 0}
                         </span>
+                        <span className="font-bold text-lg">${p.price}</span>
                         <div className="flex gap-2">
                           <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
                           <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs">Eliminar</button>

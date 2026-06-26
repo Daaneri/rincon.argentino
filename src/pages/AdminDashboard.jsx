@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
-  async function handleAddProduct(e) {
+   function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.target);
@@ -44,25 +44,36 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
-  async function handleUpdate(product) {
+ async function handleUpdate(product) {
+  // Convertimos el ID explícitamente a número para que coincida con int8
+  const idNumerico = parseInt(product.id, 10);
+  
+  console.log("Actualizando ID numérico:", idNumerico);
+
   const { data, error } = await supabase
     .from('productos')
     .update({ 
       name: editData.name, 
       price: editData.price.toString(), 
-      category: product.category, // Mantenemos el valor original
-      image_url: product.image_url // Mantenemos el valor original
+      category: product.category,
+      image_url: product.image_url 
     })
-    .eq('id', product.id)
-    .select(); // Esto es lo que te dirá si el update realmente cambió algo
+    .eq('id', idNumerico) // Usamos el ID convertido a número
+    .select();
 
   if (error) {
     console.error("Error al actualizar:", error);
     alert("Error: " + error.message);
   } else {
-    console.log("Datos actualizados:", data);
-    setEditId(null);
-    fetchData(); // Recarga la tabla
+    console.log("Respuesta del servidor:", data);
+    // Verificamos si realmente se encontró y actualizó algo
+    if (data && data.length > 0) {
+      setEditId(null);
+      fetchData(); // Recarga la tabla
+    } else {
+      console.warn("La consulta no encontró el ID en la base de datos.");
+      alert("No se pudo actualizar: el ID no coincide en la base de datos.");
+    }
   }
 }
 

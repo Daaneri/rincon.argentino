@@ -76,15 +76,15 @@ export default function ProductGrid() {
         </div>
       </div>
 
-      {/* Grid de Productos con manejo de estado vacío */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto">
-           {filteredProducts.length > 0 ? (
+      {/* Grid de Productos - Ajustado para que se vean grandes y 2 por fila en móvil */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 max-w-7xl mx-auto px-6">
+        {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div 
               key={product.id} 
-              className="group bg-rincon-olive/40 backdrop-blur-md p-4 rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60"
+              className="group bg-rincon-olive/40 backdrop-blur-md p-6 rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col"
             >
-              <div className="aspect-[4/3] bg-rincon-cream/10 rounded-2xl mb-5 overflow-hidden">
+              <div className="aspect-square bg-rincon-cream/10 rounded-2xl mb-6 overflow-hidden">
                   {product.image_url ? (
                     <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"/>
                   ) : (
@@ -92,14 +92,17 @@ export default function ProductGrid() {
                   )}
               </div>
               
-              <div className="px-2 pb-2">
-                 <h3 className="text-lg font-serif font-bold text-rincon-cream mb-1 truncate">{product.name}</h3>
-                  <p className="text-lg font-medium text-rincon-cream/80 mb-6">${product.price.toLocaleString('es-AR')}</p>
-                  <Link to={`/producto/${product.id}`} className="block">
-                  <button className="w-full border border-rincon-cream/20 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
-                      Ver detalle
-                  </button>
-                  </Link>
+              <div className="px-1 pb-2 flex-1 flex flex-col">
+                  <h3 className="text-xl font-serif font-bold text-rincon-cream mb-2 truncate">{product.name}</h3>
+                  <p className="text-xl font-medium text-rincon-cream/80 mb-8">${product.price.toLocaleString('es-AR')}</p>
+                  
+                  <div className="mt-auto">
+                    <Link to={`/producto/${product.id}`} className="block">
+                      <button className="w-full border border-rincon-cream/20 py-4 rounded-xl font-bold text-sm uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
+                          Ver detalle
+                      </button>
+                    </Link>
+                  </div>
               </div>
             </div>
           ))

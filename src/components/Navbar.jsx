@@ -15,7 +15,7 @@ export default function Navbar() {
           className="w-14 h-14 rounded-full border border-[#E6DCC8]/20 shadow-lg object-cover" 
         />
         <span className="font-serif font-bold text-[#E6DCC8] tracking-tight text-xl hidden md:block">
-          RINCÓN ARGENTINO
+          RINCÓN ARGENTINOO
         </span>
       </Link>
       

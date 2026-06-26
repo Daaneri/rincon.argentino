@@ -5,7 +5,7 @@ export default function About() {
       
       <div className="bg-[#252820] p-8 md:p-12 rounded-3xl border border-[#E6DCC8]/10 shadow-2xl">
         <p className="text-xl leading-relaxed text-[#E6DCC8]/80 font-light mb-8">
-          En <strong>Rincón Argentino</strong>, creemos que cada objeto tiene una historia para contar. 
+          En <strong>Rincón Argentinoo</strong>, creemos que cada objeto tiene una historia para contar. 
           Nuestra misión es rescatar la tradición y el alma de las artesanías de nuestra tierra, 
           acercando piezas únicas a quienes valoran el trabajo hecho a mano.
         </p>

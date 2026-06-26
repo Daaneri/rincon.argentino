@@ -10,11 +10,18 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
+  const [busqueda, setBusqueda] = useState(''); // Mejora 1
+  const [mensaje, setMensaje] = useState(''); // Mejora 3
   const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({ name: '', price: '' });
+  const [editData, setEditData] = useState({ name: '', price: '', stock: 0 });
   const navigate = useNavigate();
 
   useEffect(() => { fetchData(); }, []);
+
+  const mostrarMensaje = (texto) => {
+    setMensaje(texto);
+    setTimeout(() => setMensaje(''), 3000);
+  };
 
   async function fetchData() {
     const { data: p } = await supabase.from('productos').select('*');
@@ -29,67 +36,64 @@ export default function AdminDashboard() {
     const formData = new FormData(e.target);
     const name = formData.get('name');
     const price = parseFloat(formData.get('price'));
+    const stock = parseInt(formData.get('stock'));
     const category = formData.get('category');
     
     let imageUrl = '';
     if (file) {
-      const { data, error } = await supabase.storage.from('productos').upload(`${Date.now()}_${file.name}`, file);
-      if (data) {
-        imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
-      }
+      const { data } = await supabase.storage.from('productos').upload(`${Date.now()}_${file.name}`, file);
+      if (data) imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
     }
 
-    await supabase.from('productos').insert([{ name, price, category, image_url: imageUrl }]);
-    setFile(null);
-    e.target.reset();
-    fetchData();
+    const { error } = await supabase.from('productos').insert([{ name, price, stock, category, image_url: imageUrl }]);
+    if (error) mostrarMensaje("Error: " + error.message);
+    else {
+      mostrarMensaje("Producto agregado con éxito");
+      setFile(null);
+      e.target.reset();
+      fetchData();
+    }
     setLoading(false);
   }
 
   async function handleUpdate(product) {
     const idNumerico = parseInt(product.id, 10);
-    const { data, error } = await supabase
-      .from('productos')
-      .update({ 
-        name: editData.name, 
-        price: editData.price.toString(), 
-        category: product.category,
-        image_url: product.image_url 
-      })
-      .eq('id', idNumerico)
-      .select();
+    const { error } = await supabase.from('productos')
+      .update({ name: editData.name, price: editData.price.toString(), stock: editData.stock, category: product.category, image_url: product.image_url })
+      .eq('id', idNumerico);
 
-    if (error) {
-      console.error("Error al actualizar:", error);
-      alert("Error: " + error.message);
-    } else if (data && data.length > 0) {
+    if (error) mostrarMensaje("Error al actualizar: " + error.message);
+    else {
+      mostrarMensaje("Producto actualizado");
       setEditId(null);
       fetchData();
-    } else {
-      alert("No se pudo actualizar: el ID no coincide.");
     }
   }
 
   async function handleDelete(id) {
     if (!window.confirm("¿Eliminar este producto?")) return;
     const { error } = await supabase.from('productos').delete().eq('id', id);
-    if (error) alert("Error: " + error.message);
-    else fetchData();
+    if (error) mostrarMensaje("Error: " + error.message);
+    else {
+      mostrarMensaje("Producto eliminado");
+      fetchData();
+    }
   }
 
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
-    if (error) alert("Error: " + error.message);
+    if (error) mostrarMensaje("Error al cerrar sesión");
     else navigate('/login');
   }
 
-  const productosFiltrados = categoriaFiltro === 'Todos' 
-    ? productos 
-    : productos.filter(p => p.category === categoriaFiltro);
+  const productosFiltrados = productos.filter(p => {
+    const coincideCat = categoriaFiltro === 'Todos' || p.category === categoriaFiltro;
+    const coincideBusqueda = p.name.toLowerCase().includes(busqueda.toLowerCase());
+    return coincideCat && coincideBusqueda;
+  });
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#2D3025] text-[#EAE6D6] font-serif">
-      {/* SIDEBAR */}
       <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#3d4234] p-6 flex flex-col">
         <h1 className="text-2xl mb-6 md:mb-12 italic">Rincón Admin</h1>
         <nav className="flex md:flex-col gap-4 md:space-y-6 flex-grow overflow-x-auto pb-2">
@@ -99,30 +103,32 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 italic text-left mt-4 md:mt-auto">
-          Cerrar sesión
-        </button>
+        <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 italic text-left mt-4 md:mt-auto">Cerrar sesión</button>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 p-6 md:p-16">
+        {mensaje && <div className="bg-green-700 text-white p-3 rounded-xl mb-4 text-center animate-pulse">{mensaje}</div>}
+
         {view === 'inventory' && (
           <div className="max-w-4xl space-y-8">
             <form onSubmit={handleAddProduct} className="bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b] space-y-4">
               <h3 className="text-xl mb-4">Nuevo Producto</h3>
               <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
               <input name="price" type="number" step="any" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
+              <input name="stock" type="number" placeholder="Stock" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
               <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6">
                 <option value="Mates">Mates</option><option value="Yerbas">Yerbas</option><option value="Bombillas">Bombillas</option><option value="Accesorios">Accesorios</option>
               </select>
               <div className="flex flex-col items-center gap-2">
                 <input type="file" id="fileInput" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-                <label htmlFor="fileInput" className="cursor-pointer bg-[#454a3b] text-[#EAE6D6] px-6 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition text-sm">
-                  {file ? file.name : "Seleccionar Imagen de Galería"}
+                <label htmlFor="fileInput" className="cursor-pointer bg-[#454a3b] px-6 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition text-sm">
+                  {file ? file.name : "Seleccionar Imagen"}
                 </label>
               </div>
               <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] w-full px-8 py-2 rounded-full font-bold">GUARDAR</button>
             </form>
+
+            <input type="text" placeholder="🔍 Buscar producto..." className="w-full bg-[#35382d] p-3 rounded-full border border-[#454a3b] px-6 mb-4" onChange={(e) => setBusqueda(e.target.value)} />
 
             <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
               {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
@@ -136,14 +142,16 @@ export default function AdminDashboard() {
                   {editId === p.id ? (
                     <div className="flex gap-2 w-full">
                       <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] flex-1" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-20" value={editData.price} type="number" step="any" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                      <input className="bg-[#2D3025] px-4 py-1 rounded-full border border-[#454a3b] w-20" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
                       <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-bold">OK</button>
                     </div>
                   ) : (
                     <>
-                      <span className="text-center md:text-left">{p.name} - ${p.price}</span>
+                     <span className={(p.stock ?? 0) < 5 ? "text-red-400 font-bold" : ""}>
+  {p.name} - ${p.price} {(p.stock ?? 0) < 5 && `(Stock: ${p.stock ?? 0})`}
+</span>
                       <div className="flex gap-2">
-                        <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
+                        <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="bg-[#2D3025] border border-[#454a3b] text-blue-400 px-4 py-1 rounded-full text-xs">Editar</button>
                         <button onClick={() => handleDelete(p.id)} className="bg-[#2D3025] border border-[#454a3b] text-red-400 px-4 py-1 rounded-full text-xs">Eliminar</button>
                       </div>
                     </>

@@ -23,7 +23,8 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
-   function handleAddProduct(e) {
+  // CORRECCIÓN: Se añadió 'async' aquí
+  async function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.target);
@@ -44,38 +45,32 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
- async function handleUpdate(product) {
-  // Convertimos el ID explícitamente a número para que coincida con int8
-  const idNumerico = parseInt(product.id, 10);
-  
-  console.log("Actualizando ID numérico:", idNumerico);
+  async function handleUpdate(product) {
+    const idNumerico = parseInt(product.id, 10);
+    
+    const { data, error } = await supabase
+      .from('productos')
+      .update({ 
+        name: editData.name, 
+        price: editData.price.toString(), 
+        category: product.category,
+        image_url: product.image_url 
+      })
+      .eq('id', idNumerico)
+      .select();
 
-  const { data, error } = await supabase
-    .from('productos')
-    .update({ 
-      name: editData.name, 
-      price: editData.price.toString(), 
-      category: product.category,
-      image_url: product.image_url 
-    })
-    .eq('id', idNumerico) // Usamos el ID convertido a número
-    .select();
-
-  if (error) {
-    console.error("Error al actualizar:", error);
-    alert("Error: " + error.message);
-  } else {
-    console.log("Respuesta del servidor:", data);
-    // Verificamos si realmente se encontró y actualizó algo
-    if (data && data.length > 0) {
-      setEditId(null);
-      fetchData(); // Recarga la tabla
+    if (error) {
+      console.error("Error al actualizar:", error);
+      alert("Error: " + error.message);
     } else {
-      console.warn("La consulta no encontró el ID en la base de datos.");
-      alert("No se pudo actualizar: el ID no coincide en la base de datos.");
+      if (data && data.length > 0) {
+        setEditId(null);
+        fetchData();
+      } else {
+        alert("No se pudo actualizar: el ID no coincide.");
+      }
     }
   }
-}
 
   async function handleDelete(id) {
     if (!window.confirm("¿Eliminar este producto?")) return;

@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import { Search } from 'lucide-react'
 
 // Categorías definidas de forma estática
-const CATEGORIES = ['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'];
+const CATEGORIES = ['Todos', 'Mates', 'Bombillas', 'Accesorios'];
 
 // Componente pequeño para la tarjeta de producto
 function ProductCard({ product }) {

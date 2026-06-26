@@ -45,27 +45,26 @@ export default function AdminDashboard() {
   }
 
   async function handleUpdate(product) {
-    // Enviamos el objeto completo para asegurar integridad en Supabase
-    const { data, error } = await supabase
-      .from('productos')
-      .update({ 
-        name: editData.name, 
-        price: editData.price.toString(), 
-        category: product.category,
-        image_url: product.image_url || ''
-      })
-      .eq('id', product.id)
-      .select();
+  const { data, error } = await supabase
+    .from('productos')
+    .update({ 
+      name: editData.name, 
+      price: editData.price.toString(), 
+      category: product.category, // Mantenemos el valor original
+      image_url: product.image_url // Mantenemos el valor original
+    })
+    .eq('id', product.id)
+    .select(); // Esto es lo que te dirá si el update realmente cambió algo
 
-    if (error) {
-      console.error("ERROR:", error);
-      alert("Error al actualizar: " + error.message);
-    } else {
-      console.log("Actualización exitosa:", data);
-      setEditId(null);
-      await fetchData();
-    }
+  if (error) {
+    console.error("Error al actualizar:", error);
+    alert("Error: " + error.message);
+  } else {
+    console.log("Datos actualizados:", data);
+    setEditId(null);
+    fetchData(); // Recarga la tabla
   }
+}
 
   async function handleDelete(id) {
     if (!window.confirm("¿Eliminar este producto?")) return;

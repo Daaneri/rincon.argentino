@@ -23,7 +23,6 @@ export default function AdminDashboard() {
     setPedidos(o || []);
   }
 
-  // CORRECCIÓN: Se añadió 'async' aquí
   async function handleAddProduct(e) {
     e.preventDefault();
     setLoading(true);
@@ -79,6 +78,16 @@ export default function AdminDashboard() {
     else fetchData();
   }
 
+  // Función para cerrar sesión
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert("Error al cerrar sesión: " + error.message);
+    } else {
+      navigate('/login'); 
+    }
+  }
+
   const productosFiltrados = categoriaFiltro === 'Todos' 
     ? productos 
     : productos.filter(p => p.category === categoriaFiltro);
@@ -94,6 +103,13 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
+        {/* Botón de Cerrar Sesión */}
+        <button 
+          onClick={handleSignOut}
+          className="text-red-400 hover:text-red-300 italic text-left mt-auto"
+        >
+          Cerrar sesión
+        </button>
       </aside>
 
       <main className="flex-1 p-16">
@@ -109,7 +125,16 @@ export default function AdminDashboard() {
                 <option value="Bombillas">Bombillas</option>
                 <option value="Accesorios">Accesorios</option>
               </select>
-              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] px-8 py-2 rounded-full font-bold">GUARDAR</button>
+              
+              {/* Botón de Galería */}
+              <div className="flex flex-col items-center gap-2">
+                <input type="file" id="fileInput" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
+                <label htmlFor="fileInput" className="cursor-pointer bg-[#454a3b] text-[#EAE6D6] px-6 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition text-sm">
+                  {file ? file.name : "Seleccionar Imagen de Galería"}
+                </label>
+              </div>
+
+              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] w-full px-8 py-2 rounded-full font-bold">GUARDAR</button>
             </form>
 
             <div className="flex gap-2 mb-4">

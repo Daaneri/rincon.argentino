@@ -1,65 +1,44 @@
-import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
-import { Trash2, Minus, Plus } from 'lucide-react';
-import OrderForm from './OrderForm';
-
-export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
-  
-  const total = useMemo(() => {
-    return cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  }, [cart]);
-
-  if (cart.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#E6DCC8]">
-        <h2 className="text-3xl font-serif mb-4">Tu carrito está vacío</h2>
-        <Link to="/" className="text-[#E6DCC8]/70 underline">Volver a la tienda</Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-[1200px] mx-auto py-12 px-6">
-      <h1 className="text-4xl font-serif font-bold text-[#E6DCC8] mb-12 text-center">Tu Pedido</h1>
+// En CartPage.jsx
+return (
+  // p-4 en celular, py-16 px-8 en computadora
+  <div className="w-full max-w-6xl mx-auto py-8 px-4 md:py-16 md:px-8"> 
+    <h1 className="text-3xl md:text-5xl font-serif font-bold text-[#E6DCC8] mb-10 md:mb-16 text-center">Tu Pedido</h1>
+    
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
       
-      {/* Grilla de 12 columnas: 8 para productos, 4 para el sumario */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        <div className="lg:col-span-8 space-y-4">
-          {cart.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-6 bg-[#E6DCC8]/5 rounded-2xl border border-[#E6DCC8]/10">
-              <div className="flex items-center gap-6">
-                <img src={item.image_url} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
-                <div>
-                  <h3 className="font-bold text-lg text-[#E6DCC8]">{item.name}</h3>
-                </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3 bg-[#E6DCC8]/10 rounded-lg p-2">
-                  <button onClick={() => updateQuantity(item.id, -1)}><Minus size={16} /></button>
-                  <span className="font-bold w-8 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)}><Plus size={16} /></button>
-                </div>
-                <span className="font-bold text-lg text-[#E6DCC8] w-24 text-right">${(item.price * item.quantity).toLocaleString('es-AR')}</span>
-                <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600"><Trash2 size={20} /></button>
+      {/* Lista de productos */}
+      <div className="lg:col-span-7 space-y-4 md:space-y-6">
+        {cart.map((item) => (
+          <div key={item.id} className="flex flex-col sm:flex-row items-center justify-between p-4 md:p-8 bg-[#2D3025]/40 rounded-2xl md:rounded-3xl border border-[#E6DCC8]/10 shadow-lg gap-4">
+            <div className="flex items-center gap-4 md:gap-8 w-full sm:w-auto">
+              <img src={item.image_url} alt={item.name} className="w-20 h-20 md:w-32 md:h-32 object-cover rounded-xl md:rounded-2xl" />
+              <div>
+                <h3 className="font-bold text-lg md:text-2xl text-[#E6DCC8]">{item.name}</h3>
+                <span className="text-[#E6DCC8]/70 text-base md:text-lg">${item.price.toLocaleString('es-AR')}</span>
               </div>
             </div>
-          ))}
-        </div>
-
-        <div className="lg:col-span-4 w-full">
-          <div className="bg-[#E6DCC8]/5 p-6 rounded-3xl border border-[#E6DCC8]/10 sticky top-24">
-            <h2 className="text-2xl font-serif text-[#E6DCC8] mb-4">Sumario</h2>
-            <div className="flex justify-between text-xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-4 mb-4">
-              <span>Total</span>
-              <span>${total.toLocaleString('es-AR')}</span>
+            {/* Controles de cantidad */}
+            <div className="flex items-center gap-4 bg-[#1A1C16] rounded-xl p-2 md:p-3 border border-[#E6DCC8]/10 w-full sm:w-auto justify-center">
+              <button onClick={() => updateQuantity(item.id, -1)} className="p-2"><Minus size={18} /></button>
+              <span className="font-bold text-lg w-8 text-center">{item.quantity}</span>
+              <button onClick={() => updateQuantity(item.id, 1)} className="p-2"><Plus size={18} /></button>
+              <button onClick={() => removeFromCart(item.id)} className="ml-4 text-red-400"><Trash2 size={20} /></button>
             </div>
-            <OrderForm />
           </div>
+        ))}
+      </div>
+
+      {/* Sumario y Formulario */}
+      <div className="lg:col-span-5 w-full">
+        <div className="bg-[#1A1C16] p-6 md:p-10 rounded-2xl md:rounded-3xl border border-[#E6DCC8]/10 sticky top-24 shadow-2xl">
+          <h2 className="text-2xl md:text-3xl font-serif text-[#E6DCC8] mb-6 md:mb-8">Sumario</h2>
+          <div className="flex justify-between text-xl md:text-2xl font-bold text-[#E6DCC8] border-b border-[#E6DCC8]/10 pb-4 md:pb-6 mb-6 md:mb-8">
+            <span>Total</span>
+            <span>${total.toLocaleString('es-AR')}</span>
+          </div>
+          <OrderForm />
         </div>
       </div>
     </div>
-  );
-}
+  </div>
+);

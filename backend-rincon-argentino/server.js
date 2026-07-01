@@ -12,7 +12,7 @@ app.use(express.json());
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
 // --- NUEVO ENDPOINT PARA ENVÍOS ---
-app.post('/calculate-shipping', async (req, res) => {
+app.post('/test-shipping', async (req, res) => {
   const { zipcode } = req.body;
   
   try {

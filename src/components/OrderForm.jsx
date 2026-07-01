@@ -4,16 +4,22 @@ import { useCart } from '../context/CartContext';
 export default function OrderForm() {
   const { cart } = useCart();
   const [loading, setLoading] = useState(false);
-  const [shippingLoading, setShippingLoading] = useState(false); // Para mostrar spinner si querés
-  const [shippingCost, setShippingCost] = useState(0); // Ahora empieza en 0
-  const [formData, setFormData] = useState({ nombre: '', direccion: '', localidad: '', zipcode: '' });
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [formData, setFormData] = useState({ 
+    nombre: '', 
+    direccion: '', 
+    localidad: '', 
+    zipcode: '' 
+  });
 
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
   const total = subtotal + shippingCost;
 
-  // Nueva función: consulta al backend que configuramos
+  // Función para consultar la API de Envia.com a través de tu backend
   const handleCalculateShipping = async (zipcode) => {
     if (zipcode.length < 4) return;
+    
     setShippingLoading(true);
     try {
       const response = await fetch('https://rincon-argentino-backend.onrender.com/calculate-shipping', {
@@ -22,9 +28,11 @@ export default function OrderForm() {
         body: JSON.stringify({ zipcode })
       });
       const data = await response.json();
-      if (data.price) setShippingCost(data.price);
+      if (data.price) {
+        setShippingCost(Number(data.price));
+      }
     } catch (error) {
-      console.error("Error al calcular envío");
+      console.error("Error al calcular envío:", error);
     } finally {
       setShippingLoading(false);
     }
@@ -33,8 +41,12 @@ export default function OrderForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // IMPORTANTE: al crear la preferencia, ahora podés incluir el shippingCost en los items si querés
-    const items = cart.map(p => ({ title: p.name, unit_price: Number(p.price), quantity: Number(p.quantity) }));
+    
+    const items = cart.map(p => ({ 
+      title: p.name, 
+      unit_price: Number(p.price), 
+      quantity: Number(p.quantity) 
+    }));
     
     try {
       const response = await fetch('https://rincon-argentino-backend.onrender.com/create_preference', {
@@ -43,7 +55,9 @@ export default function OrderForm() {
         body: JSON.stringify({ items, payer: formData, shippingCost })
       });
       const data = await response.json();
-      if (data.id) window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+      if (data.id) {
+        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+      }
     } catch (error) {
       alert("Error al conectar con el sistema de pagos.");
     } finally {
@@ -60,11 +74,9 @@ export default function OrderForm() {
         <input type="text" placeholder="Nombre y Apellido" required className={inputClass} onChange={(e) => setFormData({...formData, nombre: e.target.value})} />
         <input type="text" placeholder="Dirección" required className={inputClass} onChange={(e) => setFormData({...formData, direccion: e.target.value})} />
         <input type="text" placeholder="Localidad" required className={inputClass} onChange={(e) => setFormData({...formData, localidad: e.target.value})} />
-        
-        {/* Campo Código Postal nuevo */}
         <input 
           type="text" 
-          placeholder="Código Postal (ej: 2919)" 
+          placeholder="Código Postal" 
           required 
           className={inputClass} 
           onChange={(e) => {
@@ -89,7 +101,11 @@ export default function OrderForm() {
         </div>
       </div>
 
-      <button type="submit" disabled={loading} className="w-full bg-[#E6DCC8] text-[#1A1C16] font-bold py-4 rounded hover:bg-white transition-all text-sm uppercase tracking-wider">
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="w-full bg-[#E6DCC8] text-[#1A1C16] font-bold py-4 rounded hover:bg-white transition-all text-sm uppercase tracking-wider"
+      >
         {loading ? 'PROCESANDO...' : 'REALIZAR PEDIDO'}
       </button>
     </form>

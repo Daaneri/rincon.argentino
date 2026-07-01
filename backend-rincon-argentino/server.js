@@ -2,33 +2,44 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios'); // <--- NUEVO: Instalalo con npm install axios
+const axios = require('axios');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 
 const app = express();
-app.use(cors());
+
+// CORRECCIÓN CORS: Configuración explícita para evitar bloqueos
+app.use(cors({
+  origin: '*', // O puedes poner 'https://rincon-argentino.vercel.app' para mayor seguridad
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
-// --- NUEVO ENDPOINT PARA ENVÍOS ---
+// --- ENDPOINT PARA ENVÍOS ---
 app.post('/test-shipping', async (req, res) => {
   const { zipcode } = req.body;
   
   try {
     const response = await axios.post('https://api.envia.com/ship/rate', {
-      origin: { "postalCode": "2919" }, // Tu CP: Villa Constitución
+      origin: { "postalCode": "2919" }, 
       destination: { "postalCode": zipcode },
-      packages: [{ weight: 1, length: 10, width: 10, height: 10 }] // Peso/medidas estándar
+      packages: [{ weight: 1, length: 10, width: 10, height: 10 }]
     }, { 
       headers: { 'Authorization': `Bearer ${process.env.ENVIA_API_KEY}` } 
     });
     
-    // Devolvemos el precio del servicio más barato que encuentre
-    const rate = response.data.rate[0]; 
-    res.json({ price: rate.totalPrice });
+    // Validar que la respuesta tenga datos
+    if (response.data && response.data.rate && response.data.rate.length > 0) {
+      const rate = response.data.rate[0]; 
+      res.json({ price: rate.totalPrice });
+    } else {
+      res.status(404).json({ error: "No se encontraron tarifas" });
+    }
   } catch (error) {
-    console.error(error);
+    console.error("Error Envia.com:", error.response?.data || error.message);
     res.status(500).json({ error: "No se pudo calcular el envío" });
   }
 });
@@ -55,4 +66,6 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('Servidor corriendo en puerto 3000'));
+// Usar el puerto que asigne Render (process.env.PORT) o el 3000 por defecto
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

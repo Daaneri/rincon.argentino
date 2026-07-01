@@ -7,9 +7,8 @@ const { MercadoPagoConfig, Preference } = require('mercadopago');
 
 const app = express();
 
-// CORRECCIÓN CORS: Configuración explícita para evitar bloqueos
 app.use(cors({
-  origin: '*', // O puedes poner 'https://rincon-argentino.vercel.app' para mayor seguridad
+  origin: 'https://rincon-argentino.vercel.app',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -31,10 +30,8 @@ app.post('/test-shipping', async (req, res) => {
       headers: { 'Authorization': `Bearer ${process.env.ENVIA_API_KEY}` } 
     });
     
-    // Validar que la respuesta tenga datos
     if (response.data && response.data.rate && response.data.rate.length > 0) {
-      const rate = response.data.rate[0]; 
-      res.json({ price: rate.totalPrice });
+      res.json({ price: response.data.rate[0].totalPrice });
     } else {
       res.status(404).json({ error: "No se encontraron tarifas" });
     }
@@ -66,10 +63,5 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Usar el puerto que asigne Render (process.env.PORT) o el 3000 por defecto
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
-
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
- f64edb08d52ec4efc62cc7cb5f6b507bf73ac9be

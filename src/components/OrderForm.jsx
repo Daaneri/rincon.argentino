@@ -18,8 +18,7 @@ export default function OrderForm() {
     
     setShippingLoading(true);
     try {
-      const response = await fetch('https://rincon-argentino-backend.onrender.com/calculate-shipping', {
-        method: 'POST',
+      const response = await fetch('https://rincon-argentino-backend.onrender.com/test-shipping', {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zipcode })
       });

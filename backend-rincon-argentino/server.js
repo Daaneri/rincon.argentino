@@ -68,4 +68,8 @@ app.post('/create_preference', async (req, res) => {
 
 // Usar el puerto que asigne Render (process.env.PORT) o el 3000 por defecto
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+ f64edb08d52ec4efc62cc7cb5f6b507bf73ac9be

@@ -5,9 +5,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ESTA RUTA DEBE EXISTIR PARA QUE EL FETCH FUNCIONE
+app.post('/create_preference', (req, res) => {
+    console.log("¡Ruta /create_preference encontrada!");
+    res.status(200).json({ id: "test-id-123" });
+});
+
 app.post('/test-shipping', (req, res) => {
-    console.log("¡Recibí la petición en el servidor!");
+    console.log("¡Ruta /test-shipping encontrada!");
     res.status(200).json({ mensaje: "Conexión exitosa" });
 });
 

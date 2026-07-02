@@ -2,14 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors()); // Permite peticiones desde cualquier origen
+app.use(cors());
 app.use(express.json());
 
-// Ruta de prueba definitiva
-app.post('/test-shipping', (req, res) => {
-    console.log("¡Recibí la petición en el servidor!");
-    res.status(200).json({ mensaje: "Conexión exitosa", data: req.body });
+// ESTA ES LA RUTA QUE TE DA EL ERROR 404
+app.post('/create_preference', (req, res) => {
+    console.log("¡Recibí la orden!");
+    res.status(200).json({ mensaje: "Todo funciona bien" });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));

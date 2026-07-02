@@ -1,0 +1,86 @@
+[33m279a360[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix
+[33m1ae6550[m fix
+[33me55021e[m Actualizando OrderForm con ruta de envios correcta
+[33mdae902f[m Solución definitiva de rutas
+[33mca68abd[m Solución definitiva de rutas
+[33m7906a9d[m Asegurando ruta test-shipping
+[33mc96e72e[m Reparando ruta create_preference
+[33mdccd0b8[m Estructura inicial limpia y organizada
+[33ma125474[m Corrección total de URLs y CORS
+[33m5b097cc[m Código final corregido
+[33m605a8e6[m Código final corregido
+[33m4a0615d[m Fix envio
+[33m66fce73[m Sincronizacion final y arreglo de ruta
+[33m0eccb78[m Actualizacion forzada de server
+[33mf64edb0[m Improve CORS setup and enhance shipping endpoint
+[33m17b4bdc[m Fix envio
+[33mf4e029b[m Actualizacion forzada de server
+[33ma86d189[m Forzar actualización de rutas
+[33m28f3d60[m Fix envio
+[33m7f6a428[m Integración API envío
+[33m74d7f0b[m Agregado endpoint de cálculo de envío
+[33maee875b[m Corrijo estructura y diseño de checkout
+[33m812fa5f[m Corrijo estructura y diseño de checkout
+[33m24b96d7[m Corrijo estructura y diseño de checkout
+[33m9b67f91[m Actualizo URL de backend a Render
+[33m7f642b6[m Actualizo URL de backend a Render
+[33m1752126[m Actualizo URL de backend a Render
+[33me459f7a[m Actualizo URL de backend a Render
+[33m87e1760[m Actualizo URL de backend a Render
+[33me63334a[m Descripción de lo que cambiaste
+[33m1e4dd8d[m Descripción de lo que cambiaste
+[33mb4a3c15[m Descripción de lo que cambiaste
+[33m39fe068[m Descripción de lo que cambiaste
+[33mb7bfab4[m Descripción de lo que cambiaste
+[33m5ea9f50[m Descripción de lo que cambiaste
+[33m698edcb[m Descripción de lo que cambiaste
+[33mba73ae3[m Descripción de lo que cambiaste
+[33mbffb436[m Corregir error de sintaxis async en handleAddProduct
+[33m2615bdd[m Corregir error de sintaxis async en handleAddProduct
+[33m2ca326d[m Corregir error de sintaxis async en handleAddProduct
+[33m09444c2[m Corregir error de sintaxis async en handleAddProduct
+[33m1b93198[m Corregir error de sintaxis async en handleAddProduct
+[33me4bbd68[m Corregir error de sintaxis async en handleAddProduct
+[33mdbb2b72[m Corregir error de sintaxis async en handleAddProduct
+[33m94877ef[m Corregir error de sintaxis async en handleAddProduct
+[33m98f3e1e[m Corregir error de sintaxis async en handleAddProduct
+[33m4825041[m Corregir error de sintaxis async en handleAddProduct
+[33mb26fb40[m Fix ID type conversion for int8
+[33mf8e2c30[m Descripción de los cambios, por ejemplo: Corregí el error del botón editar
+[33ma35e907[m Descripción de los cambios, por ejemplo: Corregí el error del botón editar
+[33m5bb4cc9[m Fix update logic
+[33md7beff4[m Fix update logic
+[33m3f7807d[m Corregir tipo de boton para evitar recarga
+[33m7fdfb96[m Solución final edición de productos
+[33m18f0682[m Descripción de lo que cambiaste
+[33m8dd5c5c[m fix: edicion estable
+[33m04f1d50[m Código CRUD finalizado
+[33m77858ac[m Código CRUD finalizado
+[33m1800a52[m mensaje descriptivo
+[33me20f438[m mensaje descriptivo´
+[33mb4d9888[m mensaje descriptivo
+[33m5e1bf08[m mensaje descriptivo
+[33m696cb1d[m AdminDashboard: Implementar CRUD, filtro por categoría, métricas y diseño final
+[33m54ee336[m Panel Admin Profesional
+[33mffc0557[m Panel Admin Profesional
+[33m405dc89[m Panel Admin Profesional
+[33m819f722[m Panel Admin completo: Gestión de productos, tabla de pedidos y dashboard de métricas
+[33m0452ad4[m Panel Admin completo: Gestión de productos, tabla de pedidos y dashboard de métricas
+[33me2363cf[m AdminDashboard: Implementar diseño verde profesional, subida de imágenes a Storage y lógica completa de gestión
+[33mf8dfc17[m Implementar panel de gestión pro, validaciones y subida de imágenes
+[33md0ca73f[m fix: complete functional dashboard with edit/delete
+[33m9f3b914[m style: update dashboard theme to green professional
+[33mff041ba[m refactor: unified premium dashboard design
+[33m7bfe0c4[m fix: restore default export and add inventory features
+[33mf4a3a04[m feat: add image_url field, search, and delete confirmation to admin dashboard
+[33m902e8e5[m feat: full admin dashboard integration (search, status, security, images)
+[33mcafdca0[m feat: actualizar dashboard estetica y logica editar
+[33mab673a1[m Admin: integrar ruta /admin y lógica de pedidos en el panel
+[33m471c84b[m Admin: implementar gestión de inventario, CRUD y listado de pedidos
+[33mdb18963[m Solución final de cálculo de carrito y reactividad
+[33me0a31a5[m Refactor completo de Carrito: corrección de reactividad y lógica de eliminación
+[33mca869fa[m Corregir lógica de carrito: añadir updateQuantity y asegurar reactividad del total
+[33m6b4a662[m Actualizar diseño de CartPage a layout extendido de dos columnas con controles de cantidad
+[33mfe2df1c[m Implementar funcionalidad de finalizar compra vía WhatsApp en CartPage
+[33m2aa0e3a[m Añadir configuración para rutas
+[33mc56e721[m Primera subida de mi proyecto

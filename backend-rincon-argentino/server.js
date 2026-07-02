@@ -5,10 +5,17 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-app.post('/test-shipping', (req, res) => {
-    console.log("Datos recibidos:", req.body);
-    res.status(200).json({ costo: "$5.500", mensaje: "Éxito" });
+// Ruta específica para Envíos
+app.post('/shipping-quote', (req, res) => {
+    const { zipcode } = req.body;
+    console.log("Calculando envío para:", zipcode);
+    
+    // Aquí iría tu integración real con la API de envíos
+    res.status(200).json({ 
+        success: true, 
+        cost: 4500, 
+        service: "Envíos.com" 
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
+app.listen(3000, () => console.log('Servidor activo'));

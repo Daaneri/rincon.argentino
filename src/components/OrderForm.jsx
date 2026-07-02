@@ -1,15 +1,16 @@
-const handleShippingCheck = async () => {
+const handleGetShipping = async () => {
     try {
-        const response = await fetch('https://rincon-argentino.onrender.com/test-shipping', {
+        const response = await fetch('https://rincon-argentino.onrender.com/shipping-quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ zipcode: '2919' })
+            body: JSON.stringify({ zipcode: cp }) // 'cp' es el estado de tu input
         });
         
         const data = await response.json();
-        console.log("Respuesta:", data);
-        alert("Costo: " + data.costo);
+        if(data.success) {
+            alert("El costo de envío es: $" + data.cost);
+        }
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error en cotización:", error);
     }
 };

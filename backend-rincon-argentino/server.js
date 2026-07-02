@@ -5,11 +5,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ESTA ES LA RUTA QUE TE DA EL ERROR 404
-app.post('/create_preference', (req, res) => {
-    console.log("¡Recibí la orden!");
-    res.status(200).json({ mensaje: "Todo funciona bien" });
+// ESTA RUTA DEBE EXISTIR PARA QUE EL FETCH FUNCIONE
+app.post('/test-shipping', (req, res) => {
+    console.log("¡Recibí la petición en el servidor!");
+    res.status(200).json({ mensaje: "Conexión exitosa" });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

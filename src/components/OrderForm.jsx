@@ -1,21 +1,15 @@
-const handleTestClick = async () => {
+const handleShippingCheck = async () => {
     try {
         const response = await fetch('https://rincon-argentino.onrender.com/test-shipping', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ zipcode: '2919' })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ zipcode: '2919' }) // O el valor de tu input
         });
         
         const data = await response.json();
-        console.log("Respuesta del servidor:", data);
-        alert("¡Éxito! El servidor respondió: " + data.mensaje);
+        console.log("Respuesta de Envíos.com:", data);
+        alert("Respuesta del servidor: " + data.mensaje);
     } catch (error) {
-        console.error("Error al conectar:", error);
-        alert("Hubo un error al conectar con el servidor.");
+        console.error("Error:", error);
     }
 };
-
-// Asegúrate de que el botón en tu JSX llame a esta función:
-// <button onClick={handleTestClick}>Probar Conexión</button>

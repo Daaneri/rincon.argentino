@@ -5,14 +5,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/create_preference', (req, res) => {
-    console.log("¡Ruta /create_preference encontrada!");
-    res.status(200).json({ id: "test-id-123" });
-});
-
+// Esta es la ruta para cotizar el envío
 app.post('/test-shipping', (req, res) => {
-    console.log("¡Ruta /test-shipping encontrada!");
-    res.status(200).json({ mensaje: "Conexión exitosa" });
+    const { zipcode } = req.body;
+    console.log("Cotizando envío para el código postal:", zipcode);
+    
+    // Aquí responderemos con la lógica de Envíos.com
+    res.status(200).json({ 
+        mensaje: "Cotización recibida",
+        costo: "Calculando...",
+        cp: zipcode 
+    });
 });
 
 const PORT = process.env.PORT || 3000;

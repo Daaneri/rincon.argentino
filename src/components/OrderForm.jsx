@@ -20,18 +20,15 @@ export default function OrderForm() {
 
   const handleCalculateShipping = async (zipcode) => {
     if (zipcode.length < 4) return;
-    
     setShippingLoading(true);
     try {
-      const response = await fetch('https://rincon-argentino-backend.onrender.com/test-shipping', {
+      const response = await fetch('https://rincon-argentino.onrender.com/test-shipping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zipcode })
       });
-      
       const data = await response.json();
       if (data.price) setShippingCost(Number(data.price));
-      else alert("No se pudo calcular el envío a ese CP.");
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -42,9 +39,8 @@ export default function OrderForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      const response = await fetch('https://rincon-argentino-backend.onrender.com/create_preference', {
+      const response = await fetch('https://rincon-argentino.onrender.com/create_preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -53,15 +49,11 @@ export default function OrderForm() {
           shippingCost 
         })
       });
-      
       const data = await response.json();
-      if (data.id) {
-        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
-      } else {
-        throw new Error("No se pudo crear la preferencia");
-      }
+      if (data.id) window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
     } catch (error) {
       alert("Error al conectar con el sistema de pagos.");
+    } finally {
       setLoading(false);
     }
   };
@@ -73,28 +65,13 @@ export default function OrderForm() {
       <input name="nombre" placeholder="Nombre completo" required className={inputClass} onChange={handleInputChange} />
       <input name="direccion" placeholder="Dirección" required className={inputClass} onChange={handleInputChange} />
       <input name="localidad" placeholder="Localidad" required className={inputClass} onChange={handleInputChange} />
-      <input 
-        name="zipcode" 
-        placeholder="Código Postal" 
-        required 
-        className={inputClass} 
-        onChange={(e) => {
-          handleInputChange(e);
-          handleCalculateShipping(e.target.value);
-        }} 
-      />
-
+      <input name="zipcode" placeholder="Código Postal" required className={inputClass} onChange={(e) => { handleInputChange(e); handleCalculateShipping(e.target.value); }} />
       <div className="text-[#E6DCC8] space-y-2 pt-4">
         <p>Subtotal: ${subtotal.toLocaleString()}</p>
         <p>Envío: {shippingLoading ? 'Calculando...' : `$${shippingCost.toLocaleString()}`}</p>
         <p className="font-bold text-lg">Total: ${total.toLocaleString()}</p>
       </div>
-
-      <button 
-        type="submit" 
-        disabled={loading || shippingLoading} 
-        className="w-full bg-[#E6DCC8] py-4 rounded font-bold uppercase hover:bg-[#d4cbb8] transition-colors disabled:opacity-50"
-      >
+      <button type="submit" disabled={loading || shippingLoading} className="w-full bg-[#E6DCC8] py-4 rounded font-bold uppercase transition-colors disabled:opacity-50">
         {loading ? 'PROCESANDO...' : 'REALIZAR PEDIDO'}
       </button>
     </form>

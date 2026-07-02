@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,11 +6,15 @@ const { MercadoPagoConfig, Preference } = require('mercadopago');
 
 const app = express();
 
+// Configuración CORS estricta
 app.use(cors({
   origin: 'https://rincon-argentino.vercel.app',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Responder a peticiones preflight (OPTIONS)
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -20,7 +23,6 @@ const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN 
 // --- ENDPOINT PARA ENVÍOS ---
 app.post('/test-shipping', async (req, res) => {
   const { zipcode } = req.body;
-  
   try {
     const response = await axios.post('https://api.envia.com/ship/rate', {
       origin: { "postalCode": "2919" }, 
@@ -46,7 +48,6 @@ app.post('/create_preference', async (req, res) => {
   try {
     const { items } = req.body;
     const preference = new Preference(client);
-    
     const result = await preference.create({
       body: {
         items: items,

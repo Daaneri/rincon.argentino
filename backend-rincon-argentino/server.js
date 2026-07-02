@@ -2,21 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// Esta es la ruta para cotizar el envío
 app.post('/test-shipping', (req, res) => {
-    const { zipcode } = req.body;
-    console.log("Cotizando envío para el código postal:", zipcode);
-    
-    // Aquí responderemos con la lógica de Envíos.com
-    res.status(200).json({ 
-        mensaje: "Cotización recibida",
-        costo: "Calculando...",
-        cp: zipcode 
-    });
+    console.log("Datos recibidos:", req.body);
+    res.status(200).json({ costo: "$5.500", mensaje: "Éxito" });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));

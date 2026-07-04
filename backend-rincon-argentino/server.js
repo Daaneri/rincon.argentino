@@ -26,7 +26,7 @@ app.post("/api/shipping/quote", async (req, res) => {
     postalCode: process.env.ORIGIN_POSTALCODE,
   };
 
-  const carriers = ["andreani", "correo-argentino"];
+  const carriers = ["andreani", "oca"];
 
   try {
     const results = await Promise.all(
@@ -46,18 +46,20 @@ app.post("/api/shipping/quote", async (req, res) => {
         });
 
         const raw = await r.text();
-        console.log(`--- Respuesta Envia para ${carrier} (status ${r.status}) ---`);
-        console.log(raw);
-        console.log(`--- fin respuesta ${carrier} ---`);
-
         let data;
         try {
           data = JSON.parse(raw);
         } catch {
+          console.error(`Respuesta no-JSON de Envia (carrier ${carrier}), status ${r.status}:`, raw);
           return [];
         }
 
+        console.log(`--- Respuesta Envia ${carrier} (status ${r.status}) ---`, JSON.stringify(data));
+        if (!r.ok) {
+          return [];
+        }
         return data?.data ?? [];
+
       })
     );
 
@@ -65,6 +67,37 @@ app.post("/api/shipping/quote", async (req, res) => {
   } catch (err) {
     console.error("Envia quote error:", err);
     res.status(500).json({ error: "No se pudo cotizar el envío" });
+  }
+});
+
+app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
+  const { postalCode } = req.params;
+
+  try {
+    const r = await fetch(`https://geocodes.envia.com/zipcode/AR/${postalCode}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.ENVIA_API_TOKEN}`,
+      },
+    });
+
+    const raw = await r.text();
+    console.log(`--- Respuesta Geocode ${postalCode} (status ${r.status}) ---`, raw);
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(502).json({ error: "Respuesta inválida del servicio de geocodificación" });
+    }
+
+    if (!r.ok) {
+      return res.status(404).json({ error: "Código postal no encontrado" });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("Geocode error:", err);
+    res.status(500).json({ error: "No se pudo consultar el código postal" });
   }
 });
 

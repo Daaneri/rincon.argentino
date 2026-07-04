@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { CartProvider } from './context/CartContext';
 import { Toaster } from 'sonner';
+import CheckoutEntrega from './components/CheckoutEntrega';
 
 // Componentes Públicos
 import Navbar from './components/Navbar';
@@ -59,6 +60,7 @@ function App() {
                   <Route path="/cart" element={<div className="p-8 max-w-4xl mx-auto min-h-[60vh] mt-10"><CartPage /></div>} />
                   <Route path="/producto/:id" element={<div className="p-8 max-w-6xl mx-auto min-h-[60vh] mt-10"><ProductDetail /></div>} />
                   <Route path="/about" element={<div className="p-8 max-w-4xl mx-auto min-h-[60vh] mt-10"><About /></div>} />
+                  <Route path="/checkout/entrega" element={<CheckoutEntrega />} />
                 </Routes>
               </main>
               <Footer />

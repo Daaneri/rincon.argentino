@@ -2,12 +2,15 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { MercadoPagoConfig, Preference } from "mercadopago";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
 app.post("/api/shipping/quote", async (req, res) => {
   const { destination, packages } = req.body;
@@ -98,6 +101,50 @@ app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
   } catch (err) {
     console.error("Geocode error:", err);
     res.status(500).json({ error: "No se pudo consultar el código postal" });
+  }
+});
+
+app.post("/api/payment/create-preference", async (req, res) => {
+  const { items, shippingCost, shippingDescription } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: "Faltan items del carrito" });
+  }
+
+  try {
+    const preferenceItems = items.map((item) => ({
+      title: item.name,
+      quantity: item.quantity,
+      unit_price: Number(item.price),
+      currency_id: "ARS",
+    }));
+
+    if (shippingCost > 0) {
+      preferenceItems.push({
+        title: shippingDescription || "Costo de envío",
+        quantity: 1,
+        unit_price: Number(shippingCost),
+        currency_id: "ARS",
+      });
+    }
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: preferenceItems,
+        back_urls: {
+          success: "https://rinconargentinoo.com.ar/checkout/exito",
+          failure: "https://rinconargentinoo.com.ar/checkout/error",
+          pending: "https://rinconargentinoo.com.ar/checkout/pendiente",
+        },
+        auto_return: "approved",
+      },
+    });
+
+    res.json({ init_point: result.init_point });
+  } catch (err) {
+    console.error("Error creando preferencia MP:", err);
+    res.status(500).json({ error: "No se pudo iniciar el pago" });
   }
 });
 

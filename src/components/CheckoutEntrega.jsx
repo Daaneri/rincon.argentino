@@ -31,6 +31,7 @@ export default function CheckoutEntrega() {
   const [selectedRate, setSelectedRate] = useState(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [quoteError, setQuoteError] = useState(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
 
   const totalProductos = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalConEnvio = totalProductos + (selectedRate?.totalPrice ?? 0);
@@ -95,9 +96,33 @@ export default function CheckoutEntrega() {
     }
   }
 
-  function irAPagar() {
-    // TODO: conectar MercadoPago acá — próximo paso
-    console.log("Pagar con:", selectedRate);
+  async function irAPagar() {
+    setLoadingPayment(true);
+    try {
+      const res = await fetch("https://rincon-argentino.onrender.com/api/payment/create-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart,
+          shippingCost: selectedRate.totalPrice,
+          shippingDescription: `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.init_point) {
+        alert("No se pudo iniciar el pago. Probá de nuevo.");
+        setLoadingPayment(false);
+        return;
+      }
+
+      window.location.href = data.init_point;
+    } catch (err) {
+      console.error("Error iniciando pago:", err);
+      alert("Error al conectar con MercadoPago.");
+      setLoadingPayment(false);
+    }
   }
 
   const inputClass =
@@ -228,10 +253,10 @@ export default function CheckoutEntrega() {
 
           <button
             onClick={irAPagar}
-            disabled={!selectedRate}
+            disabled={!selectedRate || loadingPayment}
             className="w-full bg-[#E6DCC8] hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-[#2D3025] font-semibold tracking-wide rounded-xl px-6 py-4 transition-colors text-lg mt-2"
           >
-            Continuar para el pago
+            {loadingPayment ? "Redirigiendo..." : "Continuar para el pago"}
           </button>
         </div>
       </div>

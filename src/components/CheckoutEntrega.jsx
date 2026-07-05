@@ -5,10 +5,10 @@ import { useCart } from "../context/CartContext";
 const PESO_ESTIMADO_POR_UNIDAD = 0.5;
 
 const PROVINCIAS = [
-  { code: "BA", name: "Buenos Aires" }, { code: "CA", name: "Catamarca" },
+  { code: "BA", name: "Buenos Aires" }, { code: "CT", name: "Catamarca" },
   { code: "CH", name: "Chaco" }, { code: "CU", name: "Chubut" },
   { code: "DF", name: "CABA" }, { code: "CB", name: "Córdoba" },
-  { code: "CR", name: "Corrientes" }, { code: "ER", name: "Entre Ríos" },
+  { code: "CN", name: "Corrientes" }, { code: "ER", name: "Entre Ríos" },
   { code: "FO", name: "Formosa" }, { code: "JY", name: "Jujuy" },
   { code: "LP", name: "La Pampa" }, { code: "LR", name: "La Rioja" },
   { code: "MZ", name: "Mendoza" }, { code: "MN", name: "Misiones" },
@@ -46,7 +46,6 @@ export default function CheckoutEntrega() {
       if (result) {
         setShippingData((prev) => ({
           ...prev,
-          city: result.locality || prev.city,
           state: result.state?.code?.["2digit"] || prev.state,
         }));
       }

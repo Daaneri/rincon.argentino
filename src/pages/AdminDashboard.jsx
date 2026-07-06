@@ -16,6 +16,16 @@ export default function AdminDashboard() {
   const [editData, setEditData] = useState({ name: '', price: '', stock: 0 });
   const navigate = useNavigate();
 
+  useEffect(() => {
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        navigate('/login');
+      }
+    }
+    checkSession();
+  }, []);
+
   useEffect(() => { fetchData(); }, []);
 
   const mostrarMensaje = (texto) => {

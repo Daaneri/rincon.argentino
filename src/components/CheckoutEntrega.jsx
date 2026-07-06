@@ -158,26 +158,26 @@ export default function CheckoutEntrega() {
   const selectValue = selectedRate?.pickup ? "pickup" : (selectedRate ? rates.indexOf(selectedRate) : "");
 
   const inputClass =
-    "w-full bg-transparent border border-[#E6DCC8]/20 rounded-xl px-4 py-3 text-[#E6DCC8] placeholder:text-[#E6DCC8]/40 focus:outline-none focus:border-[#E6DCC8]/60 transition-colors";
+    "w-full bg-transparent border border-[#E6DCC8]/20 rounded-xl px-4 py-3 text-[#E6DCC8] placeholder:text-[#E6DCC8]/40 focus:outline-none focus:border-[#E6DCC8]/60 transition-colors text-sm sm:text-base";
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-16 px-6">
+    <div className="w-full max-w-6xl mx-auto py-10 sm:py-16 px-4 sm:px-6">
       {/* Indicador de pasos */}
-      <div className="flex items-center justify-center gap-4 mb-16 text-sm text-[#E6DCC8]/50">
+      <div className="flex items-center justify-center gap-2 sm:gap-4 mb-10 sm:mb-16 text-xs sm:text-sm text-[#E6DCC8]/50">
         <span className="text-[#E6DCC8]">Carrito</span>
-        <div className="h-px w-12 bg-[#E6DCC8]/20" />
+        <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/20" />
         <span className="text-[#E6DCC8] font-semibold">Entrega</span>
-        <div className="h-px w-12 bg-[#E6DCC8]/20" />
+        <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/20" />
         <span>Pago</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
-        {/* Columna izquierda: formulario ancho */}
-        <div className="lg:col-span-7 space-y-8">
-          <div className="bg-[#2D3025]/40 rounded-3xl border border-[#E6DCC8]/10 p-8">
-            <h2 className="text-2xl font-serif text-[#E6DCC8] mb-6">Datos de contacto</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Columna izquierda: formulario */}
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
+          <div className="bg-[#2D3025]/40 rounded-2xl sm:rounded-3xl border border-[#E6DCC8]/10 p-5 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-serif text-[#E6DCC8] mb-4 sm:mb-6">Datos de contacto</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <input
                 className={inputClass}
                 placeholder="Nombre completo"
@@ -193,10 +193,10 @@ export default function CheckoutEntrega() {
             </div>
           </div>
 
-          <div className="bg-[#2D3025]/40 rounded-3xl border border-[#E6DCC8]/10 p-8 space-y-4">
-            <h2 className="text-2xl font-serif text-[#E6DCC8] mb-2">Entrega</h2>
+          <div className="bg-[#2D3025]/40 rounded-2xl sm:rounded-3xl border border-[#E6DCC8]/10 p-5 sm:p-8 space-y-3 sm:space-y-4">
+            <h2 className="text-xl sm:text-2xl font-serif text-[#E6DCC8] mb-1 sm:mb-2">Entrega</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <input
                 className={inputClass}
                 placeholder="Código postal"
@@ -235,20 +235,20 @@ export default function CheckoutEntrega() {
             <button
               onClick={cotizarEnvio}
               disabled={loadingQuote}
-              className="w-full sm:w-auto bg-[#E6DCC8] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-[#2D3025] font-semibold tracking-wide rounded-xl px-8 py-3 transition-colors"
+              className="w-full sm:w-auto bg-[#E6DCC8] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-[#2D3025] font-semibold tracking-wide rounded-xl px-6 sm:px-8 py-3 transition-colors text-sm sm:text-base"
             >
               {loadingQuote ? "Cotizando..." : "Calcular envío"}
             </button>
 
             {quoteError && (
-              <p className="text-sm text-[#e08a6b] border border-[#e08a6b]/30 bg-[#e08a6b]/10 rounded-xl px-4 py-3">
+              <p className="text-xs sm:text-sm text-[#e08a6b] border border-[#e08a6b]/30 bg-[#e08a6b]/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3">
                 {quoteError}
               </p>
             )}
 
             {(rates.length > 0 || !quoteError) && (
               <div className="pt-2">
-                <label className="block text-sm text-[#E6DCC8]/70 mb-2">Elegí una opción de envío</label>
+                <label className="block text-xs sm:text-sm text-[#E6DCC8]/70 mb-2">Elegí una opción de envío</label>
                 <select
                   className={inputClass}
                   value={selectValue}
@@ -266,8 +266,8 @@ export default function CheckoutEntrega() {
             )}
 
             {selectedRate?.branches?.length > 0 && (
-              <div className="bg-[#2D3025]/60 rounded-xl p-4 space-y-2 border border-[#E6DCC8]/10">
-                <p className="text-sm text-[#E6DCC8]/70 font-medium">Sucursales disponibles para retiro:</p>
+              <div className="bg-[#2D3025]/60 rounded-xl p-3 sm:p-4 space-y-2 border border-[#E6DCC8]/10">
+                <p className="text-xs sm:text-sm text-[#E6DCC8]/70 font-medium">Sucursales disponibles para retiro:</p>
                 {selectedRate.branches.slice(0, 5).map((branch) => (
                   <p key={branch.branch_id} className="text-xs text-[#E6DCC8]/60">
                     <span className="text-[#E6DCC8]">{branch.reference}</span> — {branch.address.street} {branch.address.number}, {branch.address.city} ({branch.address.postalCode})
@@ -278,27 +278,27 @@ export default function CheckoutEntrega() {
           </div>
         </div>
 
-        {/* Columna derecha: resumen sticky */}
-        <div className="lg:col-span-5 bg-[#1A1C16] p-10 rounded-3xl border border-[#E6DCC8]/10 sticky top-28 shadow-2xl space-y-4">
-          <h2 className="text-3xl font-serif text-[#E6DCC8] mb-6">Sumario de compra</h2>
+        {/* Columna derecha: resumen */}
+        <div className="lg:col-span-5 bg-[#1A1C16] p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[#E6DCC8]/10 lg:sticky lg:top-28 shadow-2xl space-y-3 sm:space-y-4">
+          <h2 className="text-xl sm:text-3xl font-serif text-[#E6DCC8] mb-4 sm:mb-6">Sumario de compra</h2>
 
-          <div className="flex justify-between text-sm text-[#E6DCC8]/70">
+          <div className="flex justify-between text-xs sm:text-sm text-[#E6DCC8]/70">
             <span>Subtotal</span>
             <span>${totalProductos.toLocaleString("es-AR")}</span>
           </div>
-          <div className="flex justify-between text-sm text-[#E6DCC8]/70">
+          <div className="flex justify-between text-xs sm:text-sm text-[#E6DCC8]/70">
             <span>Envío</span>
             <span>{selectedRate ? (selectedRate.totalPrice > 0 ? `$${selectedRate.totalPrice.toLocaleString("es-AR")}` : "Sin costo") : "A calcular"}</span>
           </div>
-          <div className="flex justify-between items-center text-2xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-6">
+          <div className="flex justify-between items-center text-lg sm:text-2xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-4 sm:pt-6">
             <span>Total</span>
-            <span className="text-4xl tracking-tight">${totalConEnvio.toLocaleString("es-AR")}</span>
+            <span className="text-2xl sm:text-4xl tracking-tight">${totalConEnvio.toLocaleString("es-AR")}</span>
           </div>
 
           <button
             onClick={irAPagar}
             disabled={!selectedRate || loadingPayment}
-            className="w-full bg-[#E6DCC8] hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-[#2D3025] font-semibold tracking-wide rounded-xl px-6 py-4 transition-colors text-lg mt-2"
+            className="w-full bg-[#E6DCC8] hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-[#2D3025] font-semibold tracking-wide rounded-xl px-6 py-3.5 sm:py-4 transition-colors text-base sm:text-lg mt-2"
           >
             {loadingPayment ? "Redirigiendo..." : "Continuar para el pago"}
           </button>

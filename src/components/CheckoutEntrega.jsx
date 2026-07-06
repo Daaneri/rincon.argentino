@@ -19,6 +19,14 @@ const PROVINCIAS = [
   { code: "TF", name: "Tierra del Fuego" }, { code: "TU", name: "Tucumán" },
 ];
 
+const PICKUP_OPTION = {
+  pickup: true,
+  carrierDescription: "Retiro a coordinar",
+  serviceDescription: "Coordinás día y horario por WhatsApp",
+  totalPrice: 0,
+  deliveryEstimate: "A coordinar",
+};
+
 export default function CheckoutEntrega() {
   const { cart } = useCart();
   const navigate = useNavigate();
@@ -124,6 +132,18 @@ export default function CheckoutEntrega() {
     }
   }
 
+  function handleRateChange(value) {
+    if (value === "pickup") {
+      setSelectedRate(PICKUP_OPTION);
+    } else if (value === "") {
+      setSelectedRate(null);
+    } else {
+      setSelectedRate(rates[value]);
+    }
+  }
+
+  const selectValue = selectedRate?.pickup ? "pickup" : (selectedRate ? rates.indexOf(selectedRate) : "");
+
   const inputClass =
     "w-full bg-transparent border border-[#E6DCC8]/20 rounded-xl px-4 py-3 text-[#E6DCC8] placeholder:text-[#E6DCC8]/40 focus:outline-none focus:border-[#E6DCC8]/60 transition-colors";
 
@@ -213,21 +233,33 @@ export default function CheckoutEntrega() {
               </p>
             )}
 
-            {rates.length > 0 && (
+            {(rates.length > 0 || !quoteError) && (
               <div className="pt-2">
                 <label className="block text-sm text-[#E6DCC8]/70 mb-2">Elegí una opción de envío</label>
                 <select
                   className={inputClass}
-                  value={selectedRate ? rates.indexOf(selectedRate) : ""}
-                  onChange={(e) => setSelectedRate(rates[e.target.value])}
+                  value={selectValue}
+                  onChange={(e) => handleRateChange(e.target.value)}
                 >
                   <option value="" className="text-black">Seleccioná una opción</option>
+                  <option value="pickup" className="text-black">Retiro a coordinar por WhatsApp (sin costo)</option>
                   {rates.map((rate, i) => (
                     <option key={i} value={i} className="text-black">
                       {rate.carrierDescription} - {rate.serviceDescription} - ${rate.totalPrice.toLocaleString("es-AR")} ({rate.deliveryEstimate})
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {selectedRate?.branches?.length > 0 && (
+              <div className="bg-[#2D3025]/60 rounded-xl p-4 space-y-2 border border-[#E6DCC8]/10">
+                <p className="text-sm text-[#E6DCC8]/70 font-medium">Sucursales disponibles para retiro:</p>
+                {selectedRate.branches.slice(0, 5).map((branch) => (
+                  <p key={branch.branch_id} className="text-xs text-[#E6DCC8]/60">
+                    <span className="text-[#E6DCC8]">{branch.reference}</span> — {branch.address.street} {branch.address.number}, {branch.address.city} ({branch.address.postalCode})
+                  </p>
+                ))}
               </div>
             )}
           </div>
@@ -243,7 +275,7 @@ export default function CheckoutEntrega() {
           </div>
           <div className="flex justify-between text-sm text-[#E6DCC8]/70">
             <span>Envío</span>
-            <span>{selectedRate ? `$${selectedRate.totalPrice.toLocaleString("es-AR")}` : "A calcular"}</span>
+            <span>{selectedRate ? (selectedRate.totalPrice > 0 ? `$${selectedRate.totalPrice.toLocaleString("es-AR")}` : "Sin costo") : "A calcular"}</span>
           </div>
           <div className="flex justify-between items-center text-2xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-6">
             <span>Total</span>

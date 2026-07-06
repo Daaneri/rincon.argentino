@@ -29,7 +29,7 @@ app.post("/api/shipping/quote", async (req, res) => {
     postalCode: process.env.ORIGIN_POSTALCODE,
   };
 
-  const carriers = ["andreani", "oca"];
+  const carriers = ["andreani"];
 
   try {
     const results = await Promise.all(

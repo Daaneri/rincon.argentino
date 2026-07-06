@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 app.post("/api/shipping/quote", async (req, res) => {
   const { destination, packages } = req.body;
@@ -105,13 +107,46 @@ app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
 });
 
 app.post("/api/payment/create-preference", async (req, res) => {
-  const { items, shippingCost, shippingDescription } = req.body;
+  const { items, shippingCost, shippingDescription, customer } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: "Faltan items del carrito" });
   }
 
+  if (!customer || !customer.name || !customer.phone || !customer.address) {
+    return res.status(400).json({ error: "Faltan datos del cliente" });
+  }
+
   try {
+    const totalProductos = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = totalProductos + Number(shippingCost || 0);
+
+    // 1. Guardar el pedido en Supabase ANTES de mandar a MercadoPago
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        nombre_del_cliente: customer.name,
+        telefono: customer.phone,
+        direccion: customer.address,
+        ciudad: customer.city,
+        provincia: customer.state,
+        codigo_postal: customer.postalCode,
+        productos: items,
+        costo_de_envio: Number(shippingCost || 0),
+        total: total,
+        estado: "pendiente",
+      })
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error("Error guardando pedido en Supabase:", orderError);
+      return res.status(500).json({ error: "No se pudo registrar el pedido" });
+    }
+
+    console.log("Pedido guardado:", orderData.identificador);
+
+    // 2. Crear la preferencia de pago en MercadoPago
     const preferenceItems = items.map((item) => ({
       title: item.name,
       quantity: item.quantity,
@@ -132,6 +167,7 @@ app.post("/api/payment/create-preference", async (req, res) => {
     const result = await preference.create({
       body: {
         items: preferenceItems,
+        external_reference: orderData.identificador,
         back_urls: {
           success: "https://rinconargentinoo.com.ar/checkout/exito",
           failure: "https://rinconargentinoo.com.ar/checkout/error",

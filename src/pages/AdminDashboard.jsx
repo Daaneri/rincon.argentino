@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   async function fetchData() {
     const { data: p } = await supabase.from('productos').select('*');
-    const { data: o } = await supabase.from('orders').select('*');
+    const { data: o } = await supabase.from('orders').select('*').order('creado_en', { ascending: false });
     setProductos(p || []);
     setPedidos(o || []);
   }
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     const price = parseFloat(formData.get('price'));
     const stock = parseInt(formData.get('stock'));
     const category = formData.get('category');
-    
+
     let imageUrl = '';
     if (file) {
       const { data } = await supabase.storage.from('productos').upload(`${Date.now()}_${file.name}`, file);
@@ -80,6 +80,15 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleUpdateOrderStatus(identificador, nuevoEstado) {
+    const { error } = await supabase.from('orders').update({ estado: nuevoEstado }).eq('identificador', identificador);
+    if (error) mostrarMensaje("Error al actualizar pedido: " + error.message);
+    else {
+      mostrarMensaje("Pedido actualizado");
+      fetchData();
+    }
+  }
+
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
     if (error) mostrarMensaje("Error al cerrar sesión");
@@ -92,77 +101,84 @@ export default function AdminDashboard() {
     return coincideCat && coincideBusqueda;
   });
 
+  const estadoColor = (estado) => {
+    if (estado === 'pagado') return 'bg-green-900/40 text-green-300 border-green-700/40';
+    if (estado === 'pendiente') return 'bg-yellow-900/40 text-yellow-300 border-yellow-700/40';
+    if (estado === 'fallido') return 'bg-red-900/40 text-red-300 border-red-700/40';
+    return 'bg-[#2D3025] text-[#EAE6D6] border-[#454a3b]';
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#2D3025] text-[#EAE6D6] font-serif">
-      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#3d4234] p-6 flex flex-col">
-        <h1 className="text-2xl mb-6 md:mb-12 italic">Rincón Admin</h1>
-        <nav className="flex md:flex-col gap-4 md:space-y-6 flex-grow overflow-x-auto pb-2">
+      <aside className="w-full md:w-64 md:min-h-screen border-b md:border-b-0 md:border-r border-[#3d4234] p-4 md:p-6 flex flex-col shrink-0">
+        <h1 className="text-xl md:text-2xl mb-4 md:mb-12 italic">Rincón Admin</h1>
+        <nav className="flex md:flex-col gap-3 md:gap-0 md:space-y-6 flex-grow overflow-x-auto pb-2">
           {['Inventario', 'Pedidos', 'Métricas'].map(item => (
-            <button key={item} onClick={() => setView(item)} className={`transition whitespace-nowrap ${view === item ? 'text-white font-bold' : 'text-[#8c9284] hover:text-white'}`}>
+            <button key={item} onClick={() => setView(item)} className={`transition whitespace-nowrap text-sm md:text-base ${view === item ? 'text-white font-bold' : 'text-[#8c9284] hover:text-white'}`}>
               {item}
             </button>
           ))}
         </nav>
-        <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 italic text-left mt-4 md:mt-auto">Cerrar sesión</button>
+        <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 italic text-left mt-4 md:mt-auto text-sm md:text-base">Cerrar sesión</button>
       </aside>
 
-      <main className="flex-1 p-6 md:p-16">
-        {mensaje && <div className="bg-green-700 text-white p-3 rounded-xl mb-4 text-center animate-pulse">{mensaje}</div>}
+      <main className="flex-1 p-4 sm:p-6 md:p-16 min-w-0">
+        {mensaje && <div className="bg-green-700 text-white p-3 rounded-xl mb-4 text-center animate-pulse text-sm">{mensaje}</div>}
 
         {view === 'Inventario' && (
-          <div className="max-w-4xl space-y-8">
-            <form onSubmit={handleAddProduct} className="bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b] space-y-4">
-              <h3 className="text-xl mb-4">Nuevo Producto</h3>
-              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
-              <input name="price" type="number" step="any" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
-              <input name="stock" type="number" placeholder="Stock" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6" required />
-              <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6">
+          <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+            <form onSubmit={handleAddProduct} className="bg-[#35382d] p-5 md:p-8 rounded-2xl border border-[#454a3b] space-y-3 md:space-y-4">
+              <h3 className="text-lg md:text-xl mb-2 md:mb-4">Nuevo Producto</h3>
+              <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
+              <input name="price" type="number" step="any" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
+              <input name="stock" type="number" placeholder="Stock" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
+              <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base">
                 <option value="Mates">Mates</option><option value="Yerbas">Yerbas</option><option value="Bombillas">Bombillas</option><option value="Accesorios">Accesorios</option>
               </select>
               <div className="flex flex-col items-center gap-2">
                 <input type="file" id="fileInput" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-                <label htmlFor="fileInput" className="cursor-pointer bg-[#454a3b] px-6 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition text-sm">
+                <label htmlFor="fileInput" className="cursor-pointer bg-[#454a3b] px-6 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition text-xs md:text-sm text-center break-all">
                   {file ? file.name : "Seleccionar Imagen"}
                 </label>
               </div>
-              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] w-full px-8 py-2 rounded-full font-bold">GUARDAR</button>
+              <button disabled={loading} className="bg-[#EAE6D6] text-[#2D3025] w-full px-8 py-2 rounded-full font-bold text-sm md:text-base">GUARDAR</button>
             </form>
 
-            <input type="text" placeholder="🔍 Buscar producto..." className="w-full bg-[#35382d] p-3 rounded-full border border-[#454a3b] px-6 mb-4" onChange={(e) => setBusqueda(e.target.value)} />
+            <input type="text" placeholder="🔍 Buscar producto..." className="w-full bg-[#35382d] p-3 rounded-full border border-[#454a3b] px-6 mb-2 text-sm md:text-base" onChange={(e) => setBusqueda(e.target.value)} />
 
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            <div className="flex gap-2 mb-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
               {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
-                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-6 py-1 rounded-full text-sm whitespace-nowrap ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
+                <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-5 md:px-6 py-1 rounded-full text-xs md:text-sm whitespace-nowrap shrink-0 ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
               ))}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {productosFiltrados.map(p => (
-                <div key={p.id} className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#35382d] p-6 rounded-2xl border border-[#454a3b]">
+                <div key={p.id} className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-4 bg-[#35382d] p-4 md:p-6 rounded-2xl border border-[#454a3b]">
                   {editId === p.id ? (
-                    <div className="flex flex-col md:flex-row gap-2 w-full items-center">
-                      <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] flex-1" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
+                    <div className="flex flex-col md:flex-row gap-2 w-full items-stretch md:items-center">
+                      <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] flex-1 text-sm" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
                       <div className="flex gap-2">
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" placeholder="Stock" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-20" placeholder="Precio" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                        <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold">OK</button>
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-full md:w-20 text-sm" placeholder="Stock" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-full md:w-20 text-sm" placeholder="Precio" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                        <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold shrink-0">OK</button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <span className={`truncate flex-1 font-bold text-lg ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#EAE6D6]" }`}>
+                      <span className={`truncate flex-1 font-bold text-base md:text-lg ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#EAE6D6]" }`}>
                         {p.name}
                       </span>
-                      <div className="flex items-center gap-6">
-                        <span className={`font-bold ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#8c9284]" }`}>
+                      <div className="flex flex-wrap items-center gap-3 md:gap-6">
+                        <span className={`font-bold text-sm md:text-base ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#8c9284]" }`}>
                           Stock: <span className="text-white">{p.stock ?? 0}</span>
                         </span>
-                        <span className="font-bold text-xl text-white tracking-wide">
+                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">
                           ${p.price}
                         </span>
                         <div className="flex gap-3">
-                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-sm">Editar</button>
-                          <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-sm">Eliminar</button>
+                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-xs md:text-sm">Editar</button>
+                          <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-xs md:text-sm">Eliminar</button>
                         </div>
                       </div>
                     </>
@@ -174,45 +190,87 @@ export default function AdminDashboard() {
         )}
 
         {view === 'Pedidos' && (
-           <div className="bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b] overflow-x-auto">
-             <table className="w-full text-left min-w-[500px]">
-               <thead>
-                 <tr className="border-b border-[#454a3b] text-[#EAE6D6]">
-                   <th className="pb-4 font-bold">Cliente</th>
-                   <th className="pb-4 font-bold">Total</th>
-                   <th className="pb-4 font-bold">Estado</th>
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-[#454a3b]">
-                 {pedidos.map(o => (
-                   <tr key={o.id} className="h-16 text-[#EAE6D6]">
-                     <td className="font-medium">{o.cliente}</td>
-                     <td className="font-bold text-white">${o.total}</td>
-                     <td>
-                       <span className="bg-[#2D3025] px-3 py-1 rounded-full text-xs border border-[#454a3b]">
-                         {o.estado}
-                       </span>
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-           </div>
+          <div className="max-w-4xl mx-auto space-y-4">
+            {pedidos.length === 0 && (
+              <div className="bg-[#35382d] p-8 rounded-2xl border border-[#454a3b] text-center text-[#8c9284]">
+                Todavía no hay pedidos.
+              </div>
+            )}
+
+            {pedidos.map(o => (
+              <div key={o.identificador} className="bg-[#35382d] p-5 md:p-6 rounded-2xl border border-[#454a3b] space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-base md:text-lg text-white">{o.nombre_del_cliente}</p>
+                    <p className="text-xs md:text-sm text-[#8c9284]">{o.telefono}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs border shrink-0 ${estadoColor(o.estado)}`}>
+                    {o.estado}
+                  </span>
+                </div>
+
+                <div className="text-xs md:text-sm text-[#8c9284] space-y-0.5">
+                  <p>{o.direccion}, {o.ciudad} {o.provincia && `(${o.provincia})`} {o.codigo_postal && `- CP ${o.codigo_postal}`}</p>
+                  {o.creado_en && (
+                    <p className="text-[#6b7160]">
+                      {new Date(o.creado_en).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+
+                {Array.isArray(o.productos) && o.productos.length > 0 && (
+                  <div className="bg-[#2D3025] rounded-xl p-3 space-y-1">
+                    {o.productos.map((item, i) => (
+                      <div key={i} className="flex justify-between text-xs md:text-sm text-[#EAE6D6]">
+                        <span>{item.quantity}x {item.name}</span>
+                        <span>${(item.price * item.quantity).toLocaleString('es-AR')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#454a3b]">
+                  <div className="text-xs md:text-sm text-[#8c9284]">
+                    Envío: {o.costo_de_envio > 0 ? `$${Number(o.costo_de_envio).toLocaleString('es-AR')}` : 'Sin costo'}
+                  </div>
+                  <div className="font-bold text-lg md:text-xl text-white">
+                    ${Number(o.total).toLocaleString('es-AR')}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {['pendiente', 'pagado', 'enviado', 'fallido'].map((estado) => (
+                    <button
+                      key={estado}
+                      onClick={() => handleUpdateOrderStatus(o.identificador, estado)}
+                      className={`px-3 py-1 rounded-full text-xs border transition ${
+                        o.estado === estado
+                          ? 'bg-[#EAE6D6] text-[#2D3025] border-[#EAE6D6]'
+                          : 'border-[#454a3b] text-[#8c9284] hover:text-white hover:border-[#8c9284]'
+                      }`}
+                    >
+                      {estado}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {view === 'Métricas' && (
-           <div className="h-96 bg-[#35382d] p-6 md:p-8 rounded-2xl border border-[#454a3b]">
-             <h3 className="text-xl font-bold text-white mb-6">Tendencia de Ventas</h3>
-             <ResponsiveContainer width="100%" height="100%">
-               <LineChart data={pedidos}>
-                 <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
-                 <XAxis stroke="#8c9284" dataKey="cliente" tick={{fontSize: 12, fill: '#8c9284'}} />
-                 <YAxis stroke="#8c9284" tick={{fontSize: 12, fill: '#8c9284'}} />
-                 <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '0.75rem', color: '#EAE6D6' }} />
-                 <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={3} dot={{ r: 4, fill: '#EAE6D6' }} activeDot={{ r: 6, fill: '#fff' }} />
-               </LineChart>
-             </ResponsiveContainer>
-           </div>
+          <div className="max-w-4xl mx-auto h-72 sm:h-96 bg-[#35382d] p-4 sm:p-6 md:p-8 rounded-2xl border border-[#454a3b]">
+            <h3 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6">Tendencia de Ventas</h3>
+            <ResponsiveContainer width="100%" height="85%">
+              <LineChart data={[...pedidos].reverse()}>
+                <CartesianGrid stroke="#454a3b" strokeDasharray="3 3" />
+                <XAxis stroke="#8c9284" dataKey="nombre_del_cliente" tick={{ fontSize: 10, fill: '#8c9284' }} interval="preserveStartEnd" />
+                <YAxis stroke="#8c9284" tick={{ fontSize: 10, fill: '#8c9284' }} width={40} />
+                <Tooltip contentStyle={{ backgroundColor: '#2D3025', borderColor: '#454a3b', borderRadius: '0.75rem', color: '#EAE6D6', fontSize: '0.85rem' }} />
+                <Line type="monotone" dataKey="total" stroke="#EAE6D6" strokeWidth={3} dot={{ r: 4, fill: '#EAE6D6' }} activeDot={{ r: 6, fill: '#fff' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </main>
     </div>

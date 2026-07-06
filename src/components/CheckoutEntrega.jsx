@@ -104,6 +104,11 @@ export default function CheckoutEntrega() {
   }
 
   async function irAPagar() {
+    if (!shippingData.name || !shippingData.phone || !shippingData.street) {
+      alert("Completá nombre, teléfono y dirección antes de continuar.");
+      return;
+    }
+
     setLoadingPayment(true);
     try {
       const res = await fetch("https://rincon-argentino.onrender.com/api/payment/create-preference", {
@@ -113,6 +118,14 @@ export default function CheckoutEntrega() {
           items: cart,
           shippingCost: selectedRate.totalPrice,
           shippingDescription: `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`,
+          customer: {
+            name: shippingData.name,
+            phone: shippingData.phone,
+            address: shippingData.street,
+            city: shippingData.city,
+            state: shippingData.state,
+            postalCode: shippingData.postalCode,
+          },
         }),
       });
 

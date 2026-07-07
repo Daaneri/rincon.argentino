@@ -3,14 +3,12 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Search } from 'lucide-react'
 
-// Categorías definidas de forma estática
 const CATEGORIES = ['Todos', 'Mates', 'Bombillas', 'Accesorios'];
 
-// Componente pequeño para la tarjeta de producto
 function ProductCard({ product }) {
   return (
-    <div className="group bg-rincon-olive/40 backdrop-blur-md p-3 md:p-6 rounded-2xl md:rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col">
-      <div className="aspect-[4/5] bg-rincon-cream/10 rounded-xl md:rounded-2xl mb-4 md:mb-6 overflow-hidden">
+    <div className="group bg-rincon-olive/40 backdrop-blur-md p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col">
+      <div className="aspect-[4/5] bg-rincon-cream/10 rounded-xl md:rounded-2xl mb-3 sm:mb-4 md:mb-6 overflow-hidden">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"/>
         ) : (
@@ -19,11 +17,11 @@ function ProductCard({ product }) {
       </div>
       <div className="flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="text-sm md:text-xl font-serif font-bold text-rincon-cream mb-1 truncate">{product.name}</h3>
-          <p className="text-sm md:text-lg font-medium text-rincon-cream/80 mb-4">${product.price.toLocaleString('es-AR')}</p>
+          <h3 className="text-xs sm:text-sm md:text-xl font-serif font-bold text-rincon-cream mb-1 truncate">{product.name}</h3>
+          <p className="text-xs sm:text-sm md:text-lg font-medium text-rincon-cream/80 mb-3 sm:mb-4">${product.price.toLocaleString('es-AR')}</p>
         </div>
         <Link to={`/producto/${product.id}`} className="block">
-          <button className="w-full border border-rincon-cream/20 py-2 md:py-4 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
+          <button className="w-full border border-rincon-cream/20 py-2 md:py-4 rounded-xl font-bold text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-rincon-cream hover:bg-rincon-cream hover:text-rincon-olive transition-all duration-300">
             Ver detalle
           </button>
         </Link>
@@ -61,16 +59,16 @@ export default function ProductGrid() {
     });
 
   return (
-    <div className="p-4 space-y-8">
+    <div className="px-4 sm:px-6 space-y-6 sm:space-y-8">
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex flex-wrap gap-2 justify-center">
           {CATEGORIES.map(cat => (
-            <button 
+            <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-sm transition-all border ${
-                selectedCategory === cat 
-                ? 'bg-rincon-cream text-rincon-olive font-bold border-transparent' 
+              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm transition-all border shrink-0 ${
+                selectedCategory === cat
+                ? 'bg-rincon-cream text-rincon-olive font-bold border-transparent'
                 : 'bg-rincon-olive/30 text-rincon-cream border-rincon-cream/10 hover:bg-rincon-olive/50'
               }`}
             >
@@ -79,19 +77,19 @@ export default function ProductGrid() {
           ))}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 bg-rincon-olive/20 p-4 rounded-2xl border border-rincon-cream/10 backdrop-blur-md">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4 bg-rincon-olive/20 p-3 sm:p-4 rounded-2xl border border-rincon-cream/10 backdrop-blur-md">
           <div className="relative flex-1">
-            <input 
-              type="text" 
-              placeholder="Buscar artesanías..." 
-              className="w-full bg-rincon-cream/5 border border-rincon-cream/20 text-rincon-cream p-3 pl-10 rounded-xl outline-none focus:border-rincon-cream/50 transition-colors"
+            <input
+              type="text"
+              placeholder="Buscar artesanías..."
+              className="w-full bg-rincon-cream/5 border border-rincon-cream/20 text-rincon-cream p-3 pl-10 rounded-xl outline-none focus:border-rincon-cream/50 transition-colors text-sm sm:text-base"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <Search className="absolute left-3 top-3.5 text-rincon-cream/50" size={18} />
           </div>
 
-          <select 
-            className="bg-rincon-olive border border-rincon-cream/20 text-rincon-cream p-3 rounded-xl outline-none cursor-pointer hover:bg-rincon-olive/80 transition-colors"
+          <select
+            className="w-full md:w-auto bg-rincon-olive border border-rincon-cream/20 text-rincon-cream p-3 rounded-xl outline-none cursor-pointer hover:bg-rincon-olive/80 transition-colors text-sm sm:text-base"
             onChange={(e) => setSortBy(e.target.value)}
           >
             <option value="default">Más destacados</option>
@@ -103,31 +101,29 @@ export default function ProductGrid() {
 
       {filteredProducts.length > 0 ? (
         <>
-          {/* Si se seleccionó 'Todos', separamos las secciones */}
           {selectedCategory === 'Todos' ? (
-            <div className="space-y-12">
+            <div className="space-y-8 sm:space-y-12">
               <section>
-                <h2 className="max-w-7xl mx-auto px-6 text-2xl font-serif font-bold text-rincon-cream mb-6">Nuestros Mates</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto px-4">
+                <h2 className="max-w-7xl mx-auto text-xl sm:text-2xl font-serif font-bold text-rincon-cream mb-4 sm:mb-6">Nuestros Mates</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8 max-w-7xl mx-auto">
                   {filteredProducts.filter(p => p.category === 'Mates').map(p => <ProductCard key={p.id} product={p} />)}
                 </div>
               </section>
               <section>
-                <h2 className="max-w-7xl mx-auto px-6 text-2xl font-serif font-bold text-rincon-cream mb-6">Otros Productos</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto px-4">
+                <h2 className="max-w-7xl mx-auto text-xl sm:text-2xl font-serif font-bold text-rincon-cream mb-4 sm:mb-6">Otros Productos</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8 max-w-7xl mx-auto">
                   {filteredProducts.filter(p => p.category !== 'Mates').map(p => <ProductCard key={p.id} product={p} />)}
                 </div>
               </section>
             </div>
           ) : (
-            /* Si hay un filtro aplicado, mostramos todo junto */
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8 max-w-7xl mx-auto">
               {filteredProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           )}
         </>
       ) : (
-        <div className="py-20 text-center text-rincon-cream/50 italic">
+        <div className="py-16 sm:py-20 text-center text-rincon-cream/50 italic text-sm sm:text-base px-4">
           No encontramos piezas con ese nombre o categoría.
         </div>
       )}

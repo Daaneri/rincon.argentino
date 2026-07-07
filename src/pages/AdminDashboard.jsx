@@ -13,7 +13,7 @@ export default function AdminDashboard() {
   const [busqueda, setBusqueda] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({ name: '', price: '', stock: 0 });
+  const [editData, setEditData] = useState({ name: '', price: '', stock: 0, description: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +48,7 @@ export default function AdminDashboard() {
     const price = parseFloat(formData.get('price'));
     const stock = parseInt(formData.get('stock'));
     const category = formData.get('category');
+    const description = formData.get('description');
 
     let imageUrl = '';
     if (file) {
@@ -55,7 +56,7 @@ export default function AdminDashboard() {
       if (data) imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
     }
 
-    const { error } = await supabase.from('productos').insert([{ name, price, stock, category, image_url: imageUrl }]);
+    const { error } = await supabase.from('productos').insert([{ name, price, stock, category, image_url: imageUrl, description }]);
     if (error) mostrarMensaje("Error: " + error.message);
     else {
       mostrarMensaje("Producto agregado con éxito");
@@ -69,7 +70,14 @@ export default function AdminDashboard() {
   async function handleUpdate(product) {
     const idNumerico = parseInt(product.id, 10);
     const { error } = await supabase.from('productos')
-      .update({ name: editData.name, price: editData.price.toString(), stock: parseInt(editData.stock), category: product.category, image_url: product.image_url })
+      .update({
+        name: editData.name,
+        price: editData.price.toString(),
+        stock: parseInt(editData.stock),
+        description: editData.description,
+        category: product.category,
+        image_url: product.image_url,
+      })
       .eq('id', idNumerico);
 
     if (error) mostrarMensaje("Error al actualizar: " + error.message);
@@ -118,6 +126,12 @@ export default function AdminDashboard() {
     return 'bg-[#2D3025] text-[#EAE6D6] border-[#454a3b]';
   };
 
+  const stockColor = (stock) => {
+    if (stock === 0) return 'bg-red-900/40 text-red-300 border-red-700/40';
+    if (stock < 5) return 'bg-yellow-900/40 text-yellow-300 border-yellow-700/40';
+    return 'bg-green-900/40 text-green-300 border-green-700/40';
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#2D3025] text-[#EAE6D6] font-serif">
       <aside className="w-full md:w-64 md:min-h-screen border-b md:border-b-0 md:border-r border-[#3d4234] p-4 md:p-6 flex flex-col shrink-0">
@@ -142,6 +156,7 @@ export default function AdminDashboard() {
               <input name="name" placeholder="Nombre" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
               <input name="price" type="number" step="any" placeholder="Precio" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
               <input name="stock" type="number" placeholder="Stock" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
+              <textarea name="description" placeholder="Descripción del producto" rows={3} className="w-full bg-[#2D3025] p-3 rounded-2xl border border-[#454a3b] px-6 text-sm md:text-base resize-none" />
               <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base">
                 <option value="Mates">Mates</option><option value="Yerbas">Yerbas</option><option value="Bombillas">Bombillas</option><option value="Accesorios">Accesorios</option>
               </select>
@@ -164,32 +179,39 @@ export default function AdminDashboard() {
 
             <div className="space-y-3 md:space-y-4">
               {productosFiltrados.map(p => (
-                <div key={p.id} className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-4 bg-[#35382d] p-4 md:p-6 rounded-2xl border border-[#454a3b]">
+                <div key={p.id} className="bg-[#35382d] p-4 md:p-6 rounded-2xl border border-[#454a3b] space-y-3">
                   {editId === p.id ? (
-                    <div className="flex flex-col md:flex-row gap-2 w-full items-stretch md:items-center">
-                      <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] flex-1 text-sm" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} />
-                      <div className="flex gap-2">
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-full md:w-20 text-sm" placeholder="Stock" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
-                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-full md:w-20 text-sm" placeholder="Precio" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
-                        <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold shrink-0">OK</button>
+                    <div className="space-y-2">
+                      <input className="w-full bg-[#2D3025] p-2 rounded-full border border-[#454a3b] text-sm px-4" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} placeholder="Nombre" />
+                      <textarea className="w-full bg-[#2D3025] p-2 rounded-2xl border border-[#454a3b] text-sm px-4 resize-none" rows={2} value={editData.description} onChange={(e) => setEditData({...editData, description: e.target.value})} placeholder="Descripción" />
+                      <div className="flex flex-wrap gap-2">
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-24 text-sm px-4" placeholder="Stock" value={editData.stock} type="number" onChange={(e) => setEditData({...editData, stock: e.target.value})} />
+                        <input className="bg-[#2D3025] p-2 rounded-full border border-[#454a3b] w-28 text-sm px-4" placeholder="Precio" value={editData.price} type="number" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+                        <button type="button" onClick={() => handleUpdate(p)} className="bg-green-600 text-white px-5 py-2 rounded-full text-xs font-bold">Guardar cambios</button>
+                        <button type="button" onClick={() => setEditId(null)} className="text-[#8c9284] px-3 py-2 text-xs">Cancelar</button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <span className={`truncate flex-1 font-bold text-base md:text-lg ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#EAE6D6]" }`}>
-                        {p.name}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-3 md:gap-6">
-                        <span className={`font-bold text-sm md:text-base ${ (p.stock ?? 0) < 5 ? "text-red-400" : "text-[#8c9284]" }`}>
-                          Stock: <span className="text-white">{p.stock ?? 0}</span>
-                        </span>
-                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">
-                          ${p.price}
-                        </span>
-                        <div className="flex gap-3">
-                          <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-xs md:text-sm">Editar</button>
-                          <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-xs md:text-sm">Eliminar</button>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-base md:text-lg text-[#EAE6D6] truncate">{p.name}</p>
+                          {p.description && (
+                            <p className="text-xs md:text-sm text-[#8c9284] mt-1 line-clamp-2">{p.description}</p>
+                          )}
                         </div>
+                        <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                          <span className={`px-3 py-1 rounded-full text-xs border font-medium ${stockColor(p.stock ?? 0)}`}>
+                            Stock: {p.stock ?? 0}
+                          </span>
+                          <span className="font-bold text-lg md:text-xl text-white tracking-wide">
+                            ${p.price}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 pt-1 border-t border-[#454a3b]/60 mt-1">
+                        <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock, description: p.description || '' }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-xs md:text-sm pt-2">Editar</button>
+                        <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-xs md:text-sm pt-2">Eliminar</button>
                       </div>
                     </>
                   )}

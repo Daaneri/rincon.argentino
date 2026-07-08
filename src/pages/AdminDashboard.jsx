@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [file, setFile] = useState(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
+  const [verArchivados, setVerArchivados] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({ name: '', price: '', stock: 0, description: '', image_url: '', image_urls: [] });
@@ -131,6 +132,15 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleArchive(id, estadoActual) {
+    const { error } = await supabase.from('productos').update({ archivado: !estadoActual }).eq('id', id);
+    if (error) mostrarMensaje("Error al archivar: " + error.message);
+    else {
+      mostrarMensaje(estadoActual ? "Producto restaurado" : "Producto archivado");
+      fetchData();
+    }
+  }
+
   async function handleDelete(id) {
     if (!window.confirm("¿Eliminar este producto?")) return;
     const { error } = await supabase.from('productos').delete().eq('id', id);
@@ -159,7 +169,8 @@ export default function AdminDashboard() {
   const productosFiltrados = productos.filter(p => {
     const coincideCat = categoriaFiltro === 'Todos' || p.category === categoriaFiltro;
     const coincideBusqueda = p.name.toLowerCase().includes(busqueda.toLowerCase());
-    return coincideCat && coincideBusqueda;
+    const coincideArchivado = verArchivados ? p.archivado === true : p.archivado !== true;
+    return coincideCat && coincideBusqueda && coincideArchivado;
   });
 
   const estadoColor = (estado) => {
@@ -218,6 +229,15 @@ export default function AdminDashboard() {
               {['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'].map(cat => (
                 <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-5 md:px-6 py-1 rounded-full text-xs md:text-sm whitespace-nowrap shrink-0 ${categoriaFiltro === cat ? 'bg-[#EAE6D6] text-[#2D3025]' : 'bg-[#35382d] text-[#8c9284]'}`}>{cat}</button>
               ))}
+            </div>
+
+            <div className="max-w-4xl mx-auto flex justify-end">
+              <button
+                onClick={() => setVerArchivados(!verArchivados)}
+                className={`px-4 py-1.5 rounded-full text-xs border transition ${verArchivados ? 'bg-yellow-900/30 text-yellow-300 border-yellow-700/40' : 'border-[#454a3b] text-[#8c9284] hover:text-white'}`}
+              >
+                {verArchivados ? '← Ver productos activos' : 'Ver archivados'}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
@@ -282,6 +302,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex gap-3 pt-1 border-t border-[#454a3b]/60 mt-1">
                         <button onClick={() => { setEditId(p.id); setEditData({ name: p.name, price: p.price, stock: p.stock, description: p.description || '', image_url: p.image_url || '', image_urls: Array.isArray(p.image_urls) ? p.image_urls : [] }); }} className="text-blue-400 font-bold hover:text-blue-300 transition text-xs md:text-sm pt-2">Editar</button>
+                        <button onClick={() => handleArchive(p.id, p.archivado === true)} className="text-yellow-400 font-bold hover:text-yellow-300 transition text-xs md:text-sm pt-2">{p.archivado ? 'Restaurar' : 'Archivar'}</button>
                         <button onClick={() => handleDelete(p.id)} className="text-red-400 font-bold hover:text-red-300 transition text-xs md:text-sm pt-2">Eliminar</button>
                       </div>
                     </>

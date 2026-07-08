@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Search, ImageOff } from 'lucide-react'
- 
+
 const CATEGORIES = ['Todos', 'Mates', 'Bombillas', 'Accesorios'];
- 
+
 function ProductCard({ product }) {
   const sinStock = (product.stock ?? 0) === 0;
- 
+
   return (
     <div className="group bg-rincon-olive/40 backdrop-blur-md p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl border border-rincon-cream/10 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:bg-rincon-olive/60 flex flex-col relative">
       <div className="aspect-[4/5] bg-rincon-cream/10 rounded-xl md:rounded-2xl mb-3 sm:mb-4 md:mb-6 overflow-hidden relative">
@@ -46,13 +46,13 @@ function ProductCard({ product }) {
     </div>
   );
 }
- 
+
 export default function ProductGrid() {
   const [products, setProducts] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState('default')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
- 
+
   useEffect(() => {
     async function fetchProducts() {
       const { data, error } = await supabase.from('productos').select('*')
@@ -61,8 +61,9 @@ export default function ProductGrid() {
     }
     fetchProducts()
   }, [])
- 
+
   const filteredProducts = products
+    .filter(p => p.archivado !== true)
     .filter(p => {
       const productCat = (p.category || 'Otros').toLowerCase();
       const matchesCategory = selectedCategory === 'Todos' || productCat === selectedCategory.toLowerCase();
@@ -74,10 +75,10 @@ export default function ProductGrid() {
       if (sortBy === 'price-high') return b.price - a.price;
       return 0;
     });
- 
+
   const mates = filteredProducts.filter(p => p.category === 'Mates');
   const otros = filteredProducts.filter(p => p.category !== 'Mates');
- 
+
   return (
     <div className="px-4 sm:px-6 space-y-6 sm:space-y-8">
       <div className="max-w-5xl mx-auto space-y-4">
@@ -96,7 +97,7 @@ export default function ProductGrid() {
             </button>
           ))}
         </div>
- 
+
         <div className="flex flex-col md:flex-row gap-3 sm:gap-4 bg-rincon-olive/20 p-3 sm:p-4 rounded-2xl border border-rincon-cream/10 backdrop-blur-md">
           <div className="relative flex-1">
             <input
@@ -107,7 +108,7 @@ export default function ProductGrid() {
             />
             <Search className="absolute left-3 top-3.5 text-rincon-cream/50" size={18} />
           </div>
- 
+
           <select
             className="w-full md:w-auto bg-rincon-olive border border-rincon-cream/20 text-rincon-cream p-3 rounded-xl outline-none cursor-pointer hover:bg-rincon-olive/80 transition-colors text-sm sm:text-base"
             onChange={(e) => setSortBy(e.target.value)}
@@ -117,14 +118,14 @@ export default function ProductGrid() {
             <option value="price-high">Precio: más caro</option>
           </select>
         </div>
- 
+
         {filteredProducts.length > 0 && (
           <p className="text-xs sm:text-sm text-rincon-cream/40 text-center tracking-wide">
             {filteredProducts.length} {filteredProducts.length === 1 ? 'artesanía encontrada' : 'artesanías encontradas'}
           </p>
         )}
       </div>
- 
+
       {filteredProducts.length > 0 ? (
         <>
           {selectedCategory === 'Todos' ? (

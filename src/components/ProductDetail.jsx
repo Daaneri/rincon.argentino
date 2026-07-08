@@ -10,15 +10,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [agregarCaja, setAgregarCaja] = useState(false);
+  const [cajaPresentacion, setCajaPresentacion] = useState(null);
   const { addToCart } = useCart();
-
-  const CAJA_PRESENTACION = {
-    id: 'caja-presentacion',
-    name: 'Caja de Presentación',
-    price: 5000,
-    image_url: null,
-    category: 'Accesorios',
-  };
 
   useEffect(() => {
     async function fetchProduct() {
@@ -28,7 +21,17 @@ export default function ProductDetail() {
         setSelectedImage(data.image_url);
       }
     }
+    async function fetchCaja() {
+      const { data } = await supabase
+        .from('productos')
+        .select('*')
+        .ilike('name', '%Caja de Presentación%')
+        .limit(1)
+        .maybeSingle();
+      if (data) setCajaPresentacion(data);
+    }
     fetchProduct();
+    fetchCaja();
   }, [id]);
 
   if (!product) return (
@@ -42,10 +45,9 @@ export default function ProductDetail() {
 
   function handleAgregarCarrito() {
     addToCart(product);
-    if (agregarCaja) addToCart(CAJA_PRESENTACION);
+    if (agregarCaja && cajaPresentacion) addToCart(cajaPresentacion);
   }
 
-  // Foto principal + fotos extra (image_urls), sin duplicar la principal si ya está en la lista
   const extraImages = Array.isArray(product.image_urls) ? product.image_urls : [];
   const gallery = [product.image_url, ...extraImages].filter((url, i, arr) => url && arr.indexOf(url) === i);
 
@@ -86,15 +88,17 @@ export default function ProductDetail() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-[#E6DCC8] mb-3 sm:mb-4 break-words">{product.name}</h1>
             <p className="text-xl sm:text-2xl md:text-3xl font-light text-[#E6DCC8]/80 tracking-tight mb-3 sm:mb-4">${product.price.toLocaleString('es-AR')}</p>
 
-            <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[#E6DCC8]/70 cursor-pointer w-fit">
-              <input
-                type="checkbox"
-                checked={agregarCaja}
-                onChange={(e) => setAgregarCaja(e.target.checked)}
-                className="w-4 h-4 accent-[#E6DCC8] cursor-pointer"
-              />
-              Agregar Caja de Presentación + ${CAJA_PRESENTACION.price.toLocaleString('es-AR')}
-            </label>
+            {cajaPresentacion && (
+              <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[#E6DCC8]/70 cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={agregarCaja}
+                  onChange={(e) => setAgregarCaja(e.target.checked)}
+                  className="w-4 h-4 accent-[#E6DCC8] cursor-pointer"
+                />
+                Agregar {cajaPresentacion.name} + ${Number(cajaPresentacion.price).toLocaleString('es-AR')}
+              </label>
+            )}
           </div>
 
           <div className="border-y border-[#E6DCC8]/10 py-6 sm:py-8">

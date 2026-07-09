@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { CartProvider } from './context/CartContext';
 import { Toaster } from 'sonner';
 import CheckoutEntrega from './components/CheckoutEntrega';
-import heroImage from './assets/hero-mate.jpg';
+import heroImage from './assets/hero-mate.png';
 
 // Componentes Públicos
 import Navbar from './components/Navbar';

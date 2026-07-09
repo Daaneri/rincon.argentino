@@ -10,12 +10,12 @@ import ProductGrid from './components/ProductGrid';
 import ProductDetail from './components/ProductDetail';
 import CartPage from './components/CartPage';
 import About from './components/About';
-import Footer from './components/Footer'; 
-import FloatingCart from './components/FloatingCart'; 
+import Footer from './components/Footer';
+import FloatingCart from './components/FloatingCart';
 
 // Componentes Administrativos
-import AdminDashboard from './pages/AdminDashboard'; 
-import Login from './pages/Login'; 
+import AdminDashboard from './pages/AdminDashboard';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -32,27 +32,38 @@ function App() {
               <Toaster position="bottom-right" richColors />
               <Navbar />
               <FloatingCart />
-              
+
               {/* Botón flotante actualizado */}
               <a href="https://wa.me/5491133962727" target="_blank" rel="noopener noreferrer"
                 className="fixed bottom-24 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all duration-300">
                 <MessageCircle size={24} />
               </a>
-              
+
               <main className="flex-grow">
                 <Routes>
                   <Route path="/" element={
                     <div className="flex flex-col">
-                      <section className="py-24 md:py-40 px-6 text-center border-b border-[#E6DCC8]/5">
-                        <h1 className="text-5xl md:text-8xl font-serif font-bold tracking-tighter mb-8 text-[#E6DCC8]">RINCON ARGENTINOO</h1>
-                        <div className="flex justify-center items-center gap-4">
-                          <div className="h-px w-12 bg-[#E6DCC8]/30"></div>
-                          <p className="text-sm md:text-base font-light tracking-[0.4em] uppercase text-[#E6DCC8]/60">Artesanías auténticas con alma</p>
-                          <div className="h-px w-12 bg-[#E6DCC8]/30"></div>
+                      <section
+                        className="relative py-24 sm:py-32 md:py-48 px-4 sm:px-6 text-center border-b border-[#E6DCC8]/5 bg-cover bg-center"
+                        style={{ backgroundImage: "url('https://jcdexakycfpnfymuukzt.supabase.co/storage/v1/object/public/productos/fondo-mate.jpeg')" }}
+                      >
+                        <div className="absolute inset-0 bg-[#2D3025]/70" />
+
+                        <div className="relative z-10">
+                          <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif font-bold tracking-tighter mb-6 sm:mb-8 text-[#E6DCC8]">
+                            RINCÓN<br className="sm:hidden" /> ARGENTINOO
+                          </h1>
+                          <div className="flex justify-center items-center gap-3 sm:gap-4">
+                            <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/30"></div>
+                            <p className="text-xs sm:text-sm md:text-base font-light tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#E6DCC8]/60">
+                              Artesanías auténticas con alma
+                            </p>
+                            <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/30"></div>
+                          </div>
                         </div>
                       </section>
-                      <section className="max-w-7xl mx-auto py-20 px-6">
-                        <h2 className="text-2xl font-serif font-medium mb-16 text-center tracking-widest uppercase opacity-80">Nuestra Selección</h2>
+                      <section className="max-w-7xl mx-auto py-12 sm:py-20 px-4 sm:px-6">
+                        <h2 className="text-xl sm:text-2xl font-serif font-medium mb-8 sm:mb-16 text-center tracking-widest uppercase opacity-80">Nuestra Selección</h2>
                         <ProductGrid />
                       </section>
                     </div>

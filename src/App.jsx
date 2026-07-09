@@ -45,7 +45,7 @@ function App() {
                   <Route path="/" element={
                     <div className="flex flex-col">
                       <section
-                        className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[85vh] flex items-center justify-center px-4 sm:px-6 text-center border-b border-[#E6DCC8]/5 bg-cover bg-left sm:bg-center"
+                        className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[85vh] flex items-start sm:items-center justify-center pt-16 sm:pt-0 px-4 sm:px-6 text-center border-b border-[#E6DCC8]/5 bg-cover bg-left sm:bg-center"
                         style={{ backgroundImage: `url(${heroImage})` }}
                       >
                         <div className="absolute inset-0 bg-[#2D3025]/70" />

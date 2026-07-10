@@ -69,7 +69,12 @@ const enviarEmailNotificacion = async (orderData) => {
     `
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Email enviado exitosamente a:", process.env.EMAIL_ADMIN);
+  } catch (error) {
+    console.error("Error al enviar email:", error);
+  }
 };
 
 // 3. Ruta de Creación de Preferencia

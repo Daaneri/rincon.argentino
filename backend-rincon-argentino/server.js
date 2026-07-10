@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import axios from "axios"; // Asegúrate de tenerlo instalado
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 
@@ -15,6 +16,12 @@ app.use(express.json());
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+// Configuración Envia.com
+const ENVIA_HEADERS = { 
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${process.env.ENVIA_API_KEY}` 
+};
+
 // 2. Configuración Nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -24,24 +31,38 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- NUEVAS RUTAS DE ENVÍO AGREGADAS ---
+// --- RUTAS DE ENVÍO INTEGRADAS CON ENVIA.COM ---
 app.get("/api/shipping/geocode/:cp", async (req, res) => {
-  // Implementa aquí la lógica de tu proveedor de envíos
-  res.json({ locality: "Villa Constitución", state: { code: { "2digit": "SF" } } });
+  try {
+    const response = await axios.get(`https://api.envia.com/address/validate/${req.params.cp}?countryCode=AR`, { headers: ENVIA_HEADERS });
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: "Error al validar CP" });
+  }
 });
 
 app.post("/api/shipping/quote", async (req, res) => {
-  // Implementa aquí la lógica real de cotización de tu servicio de logística
-  res.json({
-    rates: [{
-      carrierDescription: "Correo Argentino",
-      serviceDescription: "Envío Estándar",
-      deliveryEstimate: "3-5 días",
-      totalPrice: 5500
-    }]
-  });
+  const { destination } = req.body;
+  try {
+    const response = await axios.post("https://api.envia.com/ship/rate/", {
+      origin: { "postalCode": "2919", "country": "AR" },
+      destination: { "postalCode": destination.postalCode, "country": "AR" },
+      packages: [{ "content": "productos", "weight": 1, "length": 20, "width": 20, "height": 10 }],
+      carriers: ["andreani"] 
+    }, { headers: ENVIA_HEADERS });
+
+    const rates = response.data.map(rate => ({
+      carrierDescription: rate.carrierName,
+      serviceDescription: rate.serviceName,
+      totalPrice: rate.totalPrice,
+      deliveryEstimate: rate.deliveryEstimate
+    }));
+    res.json({ rates });
+  } catch (err) {
+    res.status(500).json({ error: "Error cotizando en Envia.com" });
+  }
 });
-// ----------------------------------------
+// ----------------------------------------------
 
 // Función para formatear y enviar el mail
 const enviarEmailNotificacion = async (orderData) => {
@@ -99,7 +120,6 @@ app.post("/api/payment/create-preference", async (req, res) => {
     const totalProductos = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const total = totalProductos + Number(shippingCost || 0);
 
-    // A. Guardar en Supabase
     const { data: orderData, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -119,10 +139,8 @@ app.post("/api/payment/create-preference", async (req, res) => {
 
     if (orderError) throw new Error("Error en DB: " + orderError.message);
 
-    // B. Enviar Email de notificación
     await enviarEmailNotificacion(orderData);
 
-    // C. Crear preferencia MP
     const preferenceItems = items.map((item) => ({
       title: item.name,
       quantity: item.quantity,

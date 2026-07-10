@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
+import dns from "dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
@@ -22,6 +25,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  connectionTimeout: 8000,
+  greetingTimeout: 8000,
+  socketTimeout: 8000,
 });
 
 // --- ENVIO: Cotización (Andreani vía Envia.com) ---
@@ -208,12 +214,10 @@ app.post("/api/payment/create-preference", async (req, res) => {
 
     console.log("Pedido guardado:", orderData.identificador);
 
-    // Enviar mail de notificación (si falla, no bloquea el pago)
-    try {
-      await enviarEmailNotificacion(orderData);
-    } catch (mailErr) {
+    // Enviar mail de notificación en segundo plano, sin bloquear el pago
+    enviarEmailNotificacion(orderData).catch((mailErr) => {
       console.error("Error enviando email de notificación:", mailErr);
-    }
+    });
 
     const preferenceItems = items.map((item) => ({
       title: item.name,

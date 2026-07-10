@@ -105,7 +105,7 @@ export default function OrderForm() {
 
   return (
     <div className="space-y-2.5">
-      <h3 className="font-serif text-base text-[#f0e6d2] tracking-wide mb-1">Datos de envío</h3>
+      <h3 className="font-serif text-base text-[#f0e6d2] tracking-wide mb-1">Datos de envio</h3>
 
       <div className="flex flex-wrap gap-2">
         <input

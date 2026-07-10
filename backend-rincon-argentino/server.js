@@ -1,8 +1,8 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import axios from "axios"; // Asegúrate de tenerlo instalado
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,60 +12,116 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. Configuración de clientes
+// --- Clientes ---
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-// Configuración Envia.com
-const ENVIA_HEADERS = { 
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${process.env.ENVIA_API_KEY}` 
-};
-
-// 2. Configuración Nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-// --- RUTAS DE ENVÍO INTEGRADAS CON ENVIA.COM ---
-app.get("/api/shipping/geocode/:cp", async (req, res) => {
-  try {
-    const response = await axios.get(`https://api.envia.com/address/validate/${req.params.cp}?countryCode=AR`, { headers: ENVIA_HEADERS });
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ error: "Error al validar CP" });
-  }
-});
-
+// --- ENVIO: Cotización (Andreani vía Envia.com) ---
 app.post("/api/shipping/quote", async (req, res) => {
-  const { destination } = req.body;
-  try {
-    const response = await axios.post("https://api.envia.com/ship/rate/", {
-      origin: { "postalCode": "2919", "country": "AR" },
-      destination: { "postalCode": destination.postalCode, "country": "AR" },
-      packages: [{ "content": "productos", "weight": 1, "length": 20, "width": 20, "height": 10 }],
-      carriers: ["andreani"] 
-    }, { headers: ENVIA_HEADERS });
+  const { destination, packages } = req.body;
 
-    const rates = response.data.map(rate => ({
-      carrierDescription: rate.carrierName,
-      serviceDescription: rate.serviceName,
-      totalPrice: rate.totalPrice,
-      deliveryEstimate: rate.deliveryEstimate
-    }));
-    res.json({ rates });
+  if (!destination || !packages) {
+    return res.status(400).json({ error: "Faltan destination o packages" });
+  }
+
+  const origin = {
+    name: process.env.ORIGIN_NAME,
+    phone: process.env.ORIGIN_PHONE,
+    street: process.env.ORIGIN_STREET,
+    city: process.env.ORIGIN_CITY,
+    state: process.env.ORIGIN_STATE,
+    country: "AR",
+    postalCode: process.env.ORIGIN_POSTALCODE,
+  };
+
+  const carriers = ["andreani"];
+
+  try {
+    const results = await Promise.all(
+      carriers.map(async (carrier) => {
+        const r = await fetch(`${process.env.ENVIA_API_BASE}/ship/rate/`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.ENVIA_API_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origin,
+            destination,
+            packages,
+            shipment: { type: 1, carrier },
+          }),
+        });
+
+        const raw = await r.text();
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          console.error(`Respuesta no-JSON de Envia (carrier ${carrier}), status ${r.status}:`, raw);
+          return [];
+        }
+
+        console.log(`--- Respuesta Envia ${carrier} (status ${r.status}) ---`, JSON.stringify(data));
+
+        if (!r.ok || data.meta === "error") {
+          console.error(`Error carrier ${carrier}:`, data.error || data);
+          return [];
+        }
+
+        return data?.data ?? [];
+      })
+    );
+
+    res.json({ rates: results.flat() });
   } catch (err) {
-    res.status(500).json({ error: "Error cotizando en Envia.com" });
+    console.error("Envia quote error:", err);
+    res.status(500).json({ error: "No se pudo cotizar el envío" });
   }
 });
-// ----------------------------------------------
 
-// Función para formatear y enviar el mail
-const enviarEmailNotificacion = async (orderData) => {
+// --- ENVIO: Geocode por código postal ---
+app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
+  const { postalCode } = req.params;
+
+  try {
+    const r = await fetch(`https://geocodes.envia.com/zipcode/AR/${postalCode}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.ENVIA_API_TOKEN}`,
+      },
+    });
+
+    const raw = await r.text();
+    console.log(`--- Respuesta Geocode ${postalCode} (status ${r.status}) ---`, raw);
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(502).json({ error: "Respuesta inválida del servicio de geocodificación" });
+    }
+
+    if (!r.ok) {
+      return res.status(404).json({ error: "Código postal no encontrado" });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("Geocode error:", err);
+    res.status(500).json({ error: "No se pudo consultar el código postal" });
+  }
+});
+
+// --- Email de notificación de nuevo pedido ---
+async function enviarEmailNotificacion(orderData) {
   const mailOptions = {
     from: `"Rincón Argentino" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_ADMIN,
@@ -74,7 +130,7 @@ const enviarEmailNotificacion = async (orderData) => {
       <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2 style="color: #c9a227;">¡Nuevo pedido recibido!</h2>
         <p>Se ha registrado un nuevo pedido en tu página.</p>
-        
+
         <h3>Datos del comprador:</h3>
         <ul>
           <li><b>Nombre:</b> ${orderData.nombre_del_cliente}</li>
@@ -102,19 +158,27 @@ const enviarEmailNotificacion = async (orderData) => {
             `).join('')}
           </tbody>
         </table>
-        
+
         <p><b>Costo de envío:</b> $${Number(orderData.costo_de_envio).toLocaleString('es-AR')}</p>
         <h3 style="color: #c9a227;">Total: $${Number(orderData.total).toLocaleString('es-AR')}</h3>
       </div>
-    `
+    `,
   };
 
   await transporter.sendMail(mailOptions);
-};
+}
 
-// 3. Ruta de Creación de Preferencia
+// --- PAGO: crear pedido en Supabase + preferencia de MercadoPago ---
 app.post("/api/payment/create-preference", async (req, res) => {
   const { items, shippingCost, shippingDescription, customer } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: "Faltan items del carrito" });
+  }
+
+  if (!customer || !customer.name || !customer.phone || !customer.address) {
+    return res.status(400).json({ error: "Faltan datos del cliente" });
+  }
 
   try {
     const totalProductos = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -137,9 +201,19 @@ app.post("/api/payment/create-preference", async (req, res) => {
       .select()
       .single();
 
-    if (orderError) throw new Error("Error en DB: " + orderError.message);
+    if (orderError) {
+      console.error("Error guardando pedido en Supabase:", orderError);
+      return res.status(500).json({ error: "No se pudo registrar el pedido" });
+    }
 
-    await enviarEmailNotificacion(orderData);
+    console.log("Pedido guardado:", orderData.identificador);
+
+    // Enviar mail de notificación (si falla, no bloquea el pago)
+    try {
+      await enviarEmailNotificacion(orderData);
+    } catch (mailErr) {
+      console.error("Error enviando email de notificación:", mailErr);
+    }
 
     const preferenceItems = items.map((item) => ({
       title: item.name,
@@ -173,8 +247,8 @@ app.post("/api/payment/create-preference", async (req, res) => {
 
     res.json({ init_point: result.init_point });
   } catch (err) {
-    console.error("Error en flujo de pago:", err);
-    res.status(500).json({ error: err.message });
+    console.error("Error creando preferencia MP:", err);
+    res.status(500).json({ error: "No se pudo iniciar el pago" });
   }
 });
 

@@ -24,6 +24,25 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// --- NUEVAS RUTAS DE ENVÍO AGREGADAS ---
+app.get("/api/shipping/geocode/:cp", async (req, res) => {
+  // Implementa aquí la lógica de tu proveedor de envíos
+  res.json({ locality: "Villa Constitución", state: { code: { "2digit": "SF" } } });
+});
+
+app.post("/api/shipping/quote", async (req, res) => {
+  // Implementa aquí la lógica real de cotización de tu servicio de logística
+  res.json({
+    rates: [{
+      carrierDescription: "Correo Argentino",
+      serviceDescription: "Envío Estándar",
+      deliveryEstimate: "3-5 días",
+      totalPrice: 5500
+    }]
+  });
+});
+// ----------------------------------------
+
 // Función para formatear y enviar el mail
 const enviarEmailNotificacion = async (orderData) => {
   const mailOptions = {
@@ -69,12 +88,7 @@ const enviarEmailNotificacion = async (orderData) => {
     `
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log("Email enviado exitosamente a:", process.env.EMAIL_ADMIN);
-  } catch (error) {
-    console.error("Error al enviar email:", error);
-  }
+  await transporter.sendMail(mailOptions);
 };
 
 // 3. Ruta de Creación de Preferencia

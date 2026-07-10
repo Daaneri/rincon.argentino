@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useCart } from "../context/CartContext";
 
 const PESO_ESTIMADO_POR_UNIDAD = 0.5;
+// CAMBIA LA URL DE ABAJO POR LA URL DE TU SERVICIO EN RENDER
+const API_URL = "https://rincon-argentino.onrender.com"; 
 
 export default function OrderForm() {
   const { cart } = useCart();
@@ -24,7 +26,7 @@ export default function OrderForm() {
     if (cp.length !== 4) return;
 
     try {
-      const res = await fetch(`http://localhost:4000/api/shipping/geocode/${cp}`);
+      const res = await fetch(`${API_URL}/api/shipping/geocode/${cp}`);
       if (!res.ok) return;
 
       const data = await res.json();
@@ -65,7 +67,7 @@ export default function OrderForm() {
     ];
 
     try {
-      const res = await fetch("http://localhost:4000/api/shipping/quote", {
+      const res = await fetch(`${API_URL}/api/shipping/quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,7 +94,6 @@ export default function OrderForm() {
   }
 
   function irAPagar() {
-    // TODO: conectar MercadoPago acá — próximo paso
     console.log("Pagar con:", selectedRate);
   }
 

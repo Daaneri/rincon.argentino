@@ -2,12 +2,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
-import dns from "dns";
-
-dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
@@ -18,20 +15,7 @@ app.use(express.json());
 // --- Clientes ---
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  family: 4,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  connectionTimeout: 8000,
-  greetingTimeout: 8000,
-  socketTimeout: 8000,
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // --- ENVIO: Cotización (Andreani vía Envia.com) ---
 app.post("/api/shipping/quote", async (req, res) => {
@@ -129,10 +113,10 @@ app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
   }
 });
 
-// --- Email de notificación de nuevo pedido ---
+// --- Email de notificación de nuevo pedido (via Resend, HTTPS - sin problemas de SMTP en Render) ---
 async function enviarEmailNotificacion(orderData) {
-  const mailOptions = {
-    from: `"Rincón Argentino" <${process.env.EMAIL_USER}>`,
+  const { error } = await resend.emails.send({
+    from: "Rincón Argentino <onboarding@resend.dev>",
     to: process.env.EMAIL_ADMIN,
     subject: `Nuevo Pedido #${orderData.identificador}`,
     html: `
@@ -143,7 +127,9 @@ async function enviarEmailNotificacion(orderData) {
         <h3>Datos del comprador:</h3>
         <ul>
           <li><b>Nombre:</b> ${orderData.nombre_del_cliente}</li>
+          <li><b>DNI:</b> ${orderData.dni || "-"}</li>
           <li><b>Teléfono:</b> ${orderData.telefono}</li>
+          <li><b>Correo:</b> ${orderData.email || "-"}</li>
           <li><b>Dirección:</b> ${orderData.direccion}, ${orderData.ciudad} (${orderData.provincia})</li>
           <li><b>C.P.:</b> ${orderData.codigo_postal}</li>
         </ul>
@@ -172,9 +158,11 @@ async function enviarEmailNotificacion(orderData) {
         <h3 style="color: #c9a227;">Total: $${Number(orderData.total).toLocaleString('es-AR')}</h3>
       </div>
     `,
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (error) {
+    throw new Error(JSON.stringify(error));
+  }
 }
 
 // --- PAGO: crear pedido en Supabase + preferencia de MercadoPago ---
@@ -185,7 +173,7 @@ app.post("/api/payment/create-preference", async (req, res) => {
     return res.status(400).json({ error: "Faltan items del carrito" });
   }
 
-  if (!customer || !customer.name || !customer.phone || !customer.address) {
+  if (!customer || !customer.name || !customer.dni || !customer.phone || !customer.email || !customer.address) {
     return res.status(400).json({ error: "Faltan datos del cliente" });
   }
 
@@ -197,7 +185,9 @@ app.post("/api/payment/create-preference", async (req, res) => {
       .from("orders")
       .insert({
         nombre_del_cliente: customer.name,
+        dni: customer.dni,
         telefono: customer.phone,
+        email: customer.email,
         direccion: customer.address,
         ciudad: customer.city,
         provincia: customer.state,
@@ -242,6 +232,10 @@ app.post("/api/payment/create-preference", async (req, res) => {
     const result = await preference.create({
       body: {
         items: preferenceItems,
+        payer: {
+          name: customer.name,
+          email: customer.email,
+        },
         external_reference: orderData.identificador.toString(),
         back_urls: {
           success: "https://rinconargentinoo.com.ar/checkout/exito",

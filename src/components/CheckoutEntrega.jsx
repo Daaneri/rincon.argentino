@@ -32,7 +32,7 @@ export default function CheckoutEntrega() {
   const navigate = useNavigate();
 
   const [shippingData, setShippingData] = useState({
-    name: "", phone: "", street: "", city: "", state: "", postalCode: "",
+    name: "", dni: "", phone: "", email: "", street: "", floor: "", city: "", state: "", postalCode: "",
   });
 
   const [rates, setRates] = useState([]);
@@ -85,7 +85,18 @@ export default function CheckoutEntrega() {
       const res = await fetch("https://rincon-argentino.onrender.com/api/shipping/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: { ...shippingData, country: "AR" }, packages }),
+        body: JSON.stringify({
+          destination: {
+            name: shippingData.name,
+            phone: shippingData.phone,
+            street: shippingData.street,
+            city: shippingData.city,
+            state: shippingData.state,
+            postalCode: shippingData.postalCode,
+            country: "AR",
+          },
+          packages,
+        }),
       });
       const data = await res.json();
 
@@ -104,13 +115,17 @@ export default function CheckoutEntrega() {
   }
 
   async function irAPagar() {
-    if (!shippingData.name || !shippingData.phone || !shippingData.street) {
-      alert("Completá nombre, teléfono y dirección antes de continuar.");
+    if (!shippingData.name || !shippingData.dni || !shippingData.phone || !shippingData.email || !shippingData.street) {
+      alert("Completá nombre, DNI, teléfono, correo y dirección antes de continuar.");
       return;
     }
 
     setLoadingPayment(true);
     try {
+      const direccionCompleta = shippingData.floor
+        ? `${shippingData.street}, ${shippingData.floor}`
+        : shippingData.street;
+
       const res = await fetch("https://rincon-argentino.onrender.com/api/payment/create-preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,8 +135,10 @@ export default function CheckoutEntrega() {
           shippingDescription: `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`,
           customer: {
             name: shippingData.name,
+            dni: shippingData.dni,
             phone: shippingData.phone,
-            address: shippingData.street,
+            email: shippingData.email,
+            address: direccionCompleta,
             city: shippingData.city,
             state: shippingData.state,
             postalCode: shippingData.postalCode,
@@ -180,15 +197,28 @@ export default function CheckoutEntrega() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <input
                 className={inputClass}
-                placeholder="Nombre completo"
+                placeholder="Nombre y apellido"
                 value={shippingData.name}
                 onChange={(e) => setShippingData({ ...shippingData, name: e.target.value })}
               />
               <input
                 className={inputClass}
-                placeholder="Teléfono"
+                placeholder="DNI"
+                value={shippingData.dni}
+                onChange={(e) => setShippingData({ ...shippingData, dni: e.target.value })}
+              />
+              <input
+                className={inputClass}
+                placeholder="Teléfono de contacto"
                 value={shippingData.phone}
                 onChange={(e) => setShippingData({ ...shippingData, phone: e.target.value })}
+              />
+              <input
+                className={inputClass}
+                type="email"
+                placeholder="Correo electrónico"
+                value={shippingData.email}
+                onChange={(e) => setShippingData({ ...shippingData, email: e.target.value })}
               />
             </div>
           </div>
@@ -199,7 +229,7 @@ export default function CheckoutEntrega() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <input
                 className={inputClass}
-                placeholder="Código postal"
+                placeholder="Código Postal"
                 value={shippingData.postalCode}
                 onChange={(e) => {
                   const cp = e.target.value;
@@ -209,7 +239,7 @@ export default function CheckoutEntrega() {
               />
               <input
                 className={inputClass}
-                placeholder="Ciudad"
+                placeholder="Localidad"
                 value={shippingData.city}
                 onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })}
               />
@@ -230,6 +260,12 @@ export default function CheckoutEntrega() {
               placeholder="Calle y número"
               value={shippingData.street}
               onChange={(e) => setShippingData({ ...shippingData, street: e.target.value })}
+            />
+            <input
+              className={inputClass}
+              placeholder="Piso / Departamento (opcional)"
+              value={shippingData.floor}
+              onChange={(e) => setShippingData({ ...shippingData, floor: e.target.value })}
             />
 
             <button

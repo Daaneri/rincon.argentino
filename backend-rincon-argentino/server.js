@@ -18,28 +18,27 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // --- ENVIO: Tarifas fijas ---
 app.post("/api/shipping/quote", async (req, res) => {
-  // Definimos las tarifas fijas aquí
   const tarifasFijas = [
     {
       carrierDescription: "Correo Argentino",
       serviceDescription: "Envío Estándar",
       deliveryEstimate: "3-5 días",
-      totalPrice: 5500 // Puedes ajustar este precio
+      totalPrice: 13000 // Precio fijo solicitado
     },
     {
       carrierDescription: "Motomensajería",
       serviceDescription: "Envío Express (En el día)",
       deliveryEstimate: "24hs",
-      totalPrice: 3000 // Puedes ajustar este precio
+      totalPrice: 0,
+      customLabel: "A coordinar por WhatsApp" // Etiqueta para que el frontend muestre el mensaje
     }
   ];
 
   res.json({ rates: tarifasFijas });
 });
 
-// --- ENVIO: Geocode (Ya no es necesario consultar API externa) ---
+// --- ENVIO: Geocode ---
 app.get("/api/shipping/geocode/:postalCode", async (req, res) => {
-  // Respondemos estático para evitar errores de conexión
   res.json({ locality: "Villa Constitución", state: { name: "Santa Fe" } });
 });
 
@@ -84,7 +83,7 @@ async function enviarEmailNotificacion(orderData) {
           </tbody>
         </table>
 
-        <p><b>Costo de envío:</b> $${Number(orderData.costo_de_envio).toLocaleString('es-AR')}</p>
+        <p><b>Costo de envío:</b> ${Number(orderData.costo_de_envio) > 0 ? '$' + Number(orderData.costo_de_envio).toLocaleString('es-AR') : 'A coordinar por WhatsApp'}</p>
         <h3 style="color: #c9a227;">Total: $${Number(orderData.total).toLocaleString('es-AR')}</h3>
       </div>
     `,
@@ -131,7 +130,8 @@ app.post("/api/payment/create-preference", async (req, res) => {
       currency_id: "ARS",
     }));
 
-    if (shippingCost > 0) {
+    // Solo agregar línea de envío a MercadoPago si el costo es mayor a 0
+    if (Number(shippingCost) > 0) {
       preferenceItems.push({
         title: shippingDescription || "Costo de envío",
         quantity: 1,

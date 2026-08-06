@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Search, ImageOff } from 'lucide-react'
 
-const CATEGORIES = ['Todos', 'Mates', 'Bombillas', 'Accesorios'];
+const CATEGORIES = ['Todos', 'Mates', 'Yerbas', 'Bombillas', 'Accesorios'];
 
 function ProductCard({ product }) {
   const sinStock = (product.stock ?? 0) === 0;
@@ -77,7 +77,8 @@ export default function ProductGrid() {
     });
 
   const mates = filteredProducts.filter(p => p.category === 'Mates');
-  const otros = filteredProducts.filter(p => p.category !== 'Mates');
+  const yerbas = filteredProducts.filter(p => p.category === 'Yerbas');
+  const otros = filteredProducts.filter(p => p.category !== 'Mates' && p.category !== 'Yerbas');
 
   return (
     <div className="px-4 sm:px-6 space-y-6 sm:space-y-8">
@@ -89,8 +90,8 @@ export default function ProductGrid() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm transition-all border shrink-0 ${
                 selectedCategory === cat
-                ? 'bg-rincon-cream text-rincon-olive font-bold border-transparent'
-                : 'bg-rincon-olive/30 text-rincon-cream border-rincon-cream/10 hover:bg-rincon-olive/50'
+                  ? 'bg-rincon-cream text-rincon-olive font-bold border-transparent'
+                  : 'bg-rincon-olive/30 text-rincon-cream border-rincon-cream/10 hover:bg-rincon-olive/50'
               }`}
             >
               {cat}
@@ -135,6 +136,14 @@ export default function ProductGrid() {
                   <h2 className="max-w-7xl mx-auto text-xl sm:text-2xl font-serif font-bold text-rincon-cream mb-4 sm:mb-6">Nuestros Mates</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8 max-w-7xl mx-auto">
                     {mates.map(p => <ProductCard key={p.id} product={p} />)}
+                  </div>
+                </section>
+              )}
+              {yerbas.length > 0 && (
+                <section>
+                  <h2 className="max-w-7xl mx-auto text-xl sm:text-2xl font-serif font-bold text-rincon-cream mb-4 sm:mb-6">Nuestras Yerbas</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8 max-w-7xl mx-auto">
+                    {yerbas.map(p => <ProductCard key={p.id} product={p} />)}
                   </div>
                 </section>
               )}

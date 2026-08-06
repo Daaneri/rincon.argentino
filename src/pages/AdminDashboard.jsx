@@ -212,7 +212,10 @@ export default function AdminDashboard() {
               <input name="stock" type="number" placeholder="Stock" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base" required />
               <textarea name="description" placeholder="Descripción del producto" rows={3} className="w-full bg-[#2D3025] p-3 rounded-2xl border border-[#454a3b] px-6 text-sm md:text-base resize-none" />
               <select name="category" className="w-full bg-[#2D3025] p-3 rounded-full border border-[#454a3b] px-6 text-sm md:text-base">
-                <option value="Mates">Mates</option><option value="Yerbas">Yerbas</option><option value="Bombillas">Bombillas</option><option value="Accesorios">Accesorios</option>
+                <option value="Mates">Mates</option>
+                <option value="Yerbas">Yerbas</option>
+                <option value="Bombillas">Bombillas</option>
+                <option value="Accesorios">Accesorios</option>
               </select>
               <div className="flex flex-col items-center gap-2">
                 <input type="file" id="fileInput" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
@@ -348,7 +351,7 @@ export default function AdminDashboard() {
                       <div key={i} className="flex justify-between text-xs md:text-sm text-[#EAE6D6]">
                         <span>{item.quantity}x {item.name}</span>
                         <span>${(item.price * item.quantity).toLocaleString('es-AR')}</span>
-                      </div>
+                    </div>
                     ))}
                   </div>
                 )}
@@ -375,7 +378,7 @@ export default function AdminDashboard() {
                     >
                       {estado}
                     </button>
-                  ))}
+                    ))}
                 </div>
               </div>
             ))}
@@ -439,7 +442,7 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
-      )}
-    </div>
+    )}
+  </div>
   );
 }

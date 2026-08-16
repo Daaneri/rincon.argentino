@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { compressToWebp } from '../utils/imageCompress';
 
 export default function AdminDashboard() {
   const [view, setView] = useState('Inventario');
@@ -45,31 +46,34 @@ export default function AdminDashboard() {
   }
 
   async function handleAddProduct(e) {
-    e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const price = parseFloat(formData.get('price'));
-    const stock = parseInt(formData.get('stock'));
-    const category = formData.get('category');
-    const description = formData.get('description');
+  e.preventDefault();
+  setLoading(true);
+  const formData = new FormData(e.target);
+  const name = formData.get('name');
+  const price = parseFloat(formData.get('price'));
+  const stock = parseInt(formData.get('stock'));
+  const category = formData.get('category');
+  const description = formData.get('description');
 
-    let imageUrl = '';
-    if (file) {
-      const { data } = await supabase.storage.from('productos').upload(`${Date.now()}_${file.name}`, file);
-      if (data) imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
-    }
-
-    const { error } = await supabase.from('productos').insert([{ name, price, stock, category, image_url: imageUrl, description }]);
-    if (error) mostrarMensaje("Error: " + error.message);
-    else {
-      mostrarMensaje("Producto agregado con éxito");
-      setFile(null);
-      e.target.reset();
-      fetchData();
-    }
-    setLoading(false);
+  let imageUrl = '';
+  if (file) {
+    const webpFile = await compressToWebp(file);
+    const { data } = await supabase.storage
+      .from('productos')
+      .upload(`${Date.now()}_${webpFile.name}`, webpFile, { contentType: 'image/webp' });
+    if (data) imageUrl = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
   }
+
+  const { error } = await supabase.from('productos').insert([{ name, price, stock, category, image_url: imageUrl, description }]);
+  if (error) mostrarMensaje("Error: " + error.message);
+  else {
+    mostrarMensaje("Producto agregado con éxito");
+    setFile(null);
+    e.target.reset();
+    fetchData();
+  }
+  setLoading(false);
+}
 
   async function fetchStorageFiles() {
     setLoadingStorage(true);

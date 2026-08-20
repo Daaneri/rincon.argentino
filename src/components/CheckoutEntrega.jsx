@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const PESO_ESTIMADO_POR_UNIDAD = 0.5;
+const MONTO_ENVIO_GRATIS = 85000;
 
 const PROVINCIAS = [
   { code: "BA", name: "Buenos Aires" }, { code: "CT", name: "Catamarca" },
@@ -42,7 +43,11 @@ export default function CheckoutEntrega() {
   const [loadingPayment, setLoadingPayment] = useState(false);
 
   const totalProductos = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalConEnvio = totalProductos + (selectedRate?.totalPrice ?? 0);
+  
+  // Si supera el monto mínimo y el envío no es pickup, el costo es 0
+  const aplicaEnvioGratis = totalProductos >= MONTO_ENVIO_GRATIS;
+  const costoEnvioReal = selectedRate?.pickup ? 0 : (aplicaEnvioGratis ? 0 : (selectedRate?.totalPrice ?? 0));
+  const totalConEnvio = totalProductos + costoEnvioReal;
 
   async function buscarPorCP(cp) {
     if (cp.length !== 4) return;
@@ -105,7 +110,15 @@ export default function CheckoutEntrega() {
         setRates([]);
         return;
       }
-      setRates(data.rates);
+
+      // Si aplica envío gratis, forzamos totalPrice a 0 en las opciones cotizadas
+      const ratesModificadas = data.rates.map(rate => ({
+        ...rate,
+        totalPrice: aplicaEnvioGratis ? 0 : rate.totalPrice,
+        customLabel: aplicaEnvioGratis ? "¡Envío Gratis!" : rate.customLabel
+      }));
+
+      setRates(ratesModificadas);
     } catch (err) {
       console.error("Error cotizando envío:", err);
       setQuoteError("Error al conectar con el servidor de envíos.");
@@ -131,8 +144,8 @@ export default function CheckoutEntrega() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cart,
-          shippingCost: selectedRate.totalPrice,
-          shippingDescription: selectedRate.customLabel || `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`,
+          shippingCost: costoEnvioReal,
+          shippingDescription: selectedRate.pickup ? "Retiro a coordinar" : (aplicaEnvioGratis ? "Envío Gratis (Promoción)" : (selectedRate.customLabel || `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`)),
           customer: {
             name: shippingData.name,
             dni: shippingData.dni,
@@ -168,7 +181,12 @@ export default function CheckoutEntrega() {
     } else if (value === "") {
       setSelectedRate(null);
     } else {
-      setSelectedRate(rates[value]);
+      // Si aplica envío gratis, nos aseguramos de que la tarifa seleccionada tenga precio 0
+      const rateSeleccionada = rates[value];
+      setSelectedRate({
+        ...rateSeleccionada,
+        totalPrice: aplicaEnvioGratis ? 0 : rateSeleccionada.totalPrice
+      });
     }
   }
 
@@ -185,6 +203,15 @@ export default function CheckoutEntrega() {
         <span className="text-[#E6DCC8] font-semibold">Entrega</span>
         <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/20" />
         <span>Pago</span>
+      </div>
+
+      {/* Aviso flotante de Envío Gratis */}
+      <div className="mb-6 p-4 rounded-2xl bg-[#2D3025]/60 border border-[#E6DCC8]/20 text-center text-sm sm:text-base text-[#E6DCC8]">
+        {aplicaEnvioGratis ? (
+          <span className="font-semibold text-emerald-400">🎉 ¡Felicitaciones! Tenés envío gratis en este pedido.</span>
+        ) : (
+          <span>Agregá <strong className="text-white">${(MONTO_ENVIO_GRATIS - totalProductos).toLocaleString("es-AR")}</strong> más en productos para obtener <strong>envío gratis</strong>.</span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -224,7 +251,7 @@ export default function CheckoutEntrega() {
                   <option value="pickup" className="text-black">Retiro a coordinar por WhatsApp (sin costo)</option>
                   {rates.map((rate, i) => (
                     <option key={i} value={i} className="text-black">
-                      {rate.carrierDescription} - {rate.serviceDescription} - {rate.customLabel ? rate.customLabel : `$${rate.totalPrice.toLocaleString("es-AR")}`}
+                      {rate.carrierDescription} - {rate.serviceDescription} - {aplicaEnvioGratis ? "¡Envío Gratis!" : `$${rate.totalPrice.toLocaleString("es-AR")}`}
                     </option>
                   ))}
                 </select>
@@ -241,7 +268,11 @@ export default function CheckoutEntrega() {
           </div>
           <div className="flex justify-between text-xs sm:text-sm text-[#E6DCC8]/70">
             <span>Envío</span>
-            <span>{selectedRate ? (selectedRate.customLabel ? selectedRate.customLabel : `$${selectedRate.totalPrice.toLocaleString("es-AR")}`) : "A calcular"}</span>
+            <span>
+              {selectedRate 
+                ? (costoEnvioReal === 0 ? "Gratis" : `$${costoEnvioReal.toLocaleString("es-AR")}`) 
+                : "A calcular"}
+            </span>
           </div>
           <div className="flex justify-between items-center text-lg sm:text-2xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-4 sm:pt-6">
             <span>Total</span>

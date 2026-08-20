@@ -79,7 +79,7 @@ async function enviarEmailNotificacion(orderData) {
           </tbody>
         </table>
 
-        <p><b>Costo de envío:</b> ${Number(orderData.costo_de_envio) > 0 ? '$' + Number(orderData.costo_de_envio).toLocaleString('es-AR') : 'A coordinar por WhatsApp'}</p>
+        <p><b>Costo de envío:</b> ${Number(orderData.costo_de_envio) > 0 ? '$' + Number(orderData.costo_de_envio).toLocaleString('es-AR') : 'Gratis / A coordinar'}</p>
         <h3 style="color: #C4A278;">Total: $${Number(orderData.total).toLocaleString('es-AR')}</h3>
       </div>
     `,
@@ -120,7 +120,7 @@ async function enviarEmailConfirmacionCliente(orderData) {
           </tbody>
         </table>
 
-        <p><b>Envío:</b> ${Number(orderData.costo_de_envio) > 0 ? '$' + Number(orderData.costo_de_envio).toLocaleString('es-AR') : 'A coordinar por WhatsApp'}</p>
+        <p><b>Envío:</b> ${Number(orderData.costo_de_envio) > 0 ? '$' + Number(orderData.costo_de_envio).toLocaleString('es-AR') : 'Gratis'}</p>
         <p><b>Dirección de entrega:</b> ${orderData.direccion}, ${orderData.ciudad} (${orderData.provincia})</p>
         <h3 style="color: #C4A278;">Total: $${Number(orderData.total).toLocaleString('es-AR')}</h3>
 
@@ -172,6 +172,7 @@ app.post("/api/payment/create-preference", async (req, res) => {
       currency_id: "ARS",
     }));
 
+    // Si el costo de envío es mayor a 0, lo agregamos como ítem cobrable en MercadoPago
     if (Number(shippingCost) > 0) {
       preferenceItems.push({
         title: shippingDescription || "Costo de envío",

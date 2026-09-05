@@ -13,7 +13,7 @@
  * @param {number} opciones.maxAncho - Redimensiona si es más ancha (default 1600)
  * @returns {Promise<File>} - Nuevo File en formato webp
  */
-export async function compressToWebp(file, { calidad = 0.85, maxAncho = 1600 } = {}) {
+export async function compressToWebp(file, { calidad = 0.8, maxAncho = 900 } = {}) {
   // Si el navegador no soporta la conversión, devolvemos el original
   if (!file || !file.type.startsWith('image/')) return file;
 

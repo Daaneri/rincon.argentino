@@ -90,6 +90,71 @@ export default function AdminDashboard() {
     setLoadingStorage(false);
   }
 
+  async function recomprimirTodo() {
+    setLoadingStorage(true);
+    const { data: archivos, error } = await supabase.storage.from('productos').list('', { limit: 1000 });
+    if (error || !archivos) {
+      mostrarMensaje("Error al listar archivos: " + (error?.message || ''));
+      setLoadingStorage(false);
+      return;
+    }
+
+    const archivosValidos = archivos.filter(f => f.name && !f.name.endsWith('/'));
+    if (!window.confirm(`Se van a recomprimir ${archivosValidos.length} imágenes ya subidas. Puede tardar unos minutos, no cierres esta pestaña. ¿Continuar?`)) {
+      setLoadingStorage(false);
+      return;
+    }
+
+    let ok = 0, fallidos = 0;
+
+    for (const archivo of archivosValidos) {
+      try {
+        const { data: blobData, error: downloadError } = await supabase.storage
+          .from('productos')
+          .download(archivo.name);
+        if (downloadError || !blobData) { fallidos++; continue; }
+
+        const fileOriginal = new File([blobData], archivo.name, { type: blobData.type || 'image/webp' });
+        const comprimido = await compressToWebp(fileOriginal, { calidad: 0.8, maxAncho: 900 });
+
+        const { error: uploadError } = await supabase.storage
+          .from('productos')
+          .upload(archivo.name, comprimido, { contentType: 'image/webp', upsert: true });
+
+        if (uploadError) fallidos++; else ok++;
+      } catch (err) {
+        console.error(`Error con ${archivo.name}:`, err);
+        fallidos++;
+      }
+    }
+
+    mostrarMensaje(`Recompresión terminada: ${ok} ok, ${fallidos} fallidas`);
+    setLoadingStorage(false);
+    fetchStorageFiles();
+  }
+
+  async function handleUploadMain(file) {
+    if (!file) return;
+    const webpFile = await compressToWebp(file);
+    const { data, error } = await supabase.storage
+      .from('productos')
+      .upload(`${Date.now()}_${webpFile.name}`, webpFile, { contentType: 'image/webp' });
+    if (error) { mostrarMensaje("Error al subir imagen: " + error.message); return; }
+    const url = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
+    setEditData((prev) => ({ ...prev, image_url: url }));
+  }
+
+  async function handleUploadExtra(file) {
+    if (!file) return;
+    const webpFile = await compressToWebp(file);
+    const { data, error } = await supabase.storage
+      .from('productos')
+      .upload(`${Date.now()}_${webpFile.name}`, webpFile, { contentType: 'image/webp' });
+    if (error) { mostrarMensaje("Error al subir imagen: " + error.message); return; }
+    const url = supabase.storage.from('productos').getPublicUrl(data.path).data.publicUrl;
+    setEditData((prev) => ({ ...prev, image_urls: [...prev.image_urls, url] }));
+  }
+
   function abrirPicker(modo) {
     setPickerMode(modo);
     if (storageFiles.length === 0) fetchStorageFiles();
@@ -238,7 +303,14 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <div className="max-w-4xl mx-auto flex justify-end">
+            <div className="max-w-4xl mx-auto flex flex-wrap justify-end gap-2">
+              <button
+                onClick={recomprimirTodo}
+                disabled={loadingStorage}
+                className="px-4 py-1.5 rounded-full text-xs border border-yellow-700/40 bg-yellow-900/20 text-yellow-300 hover:bg-yellow-900/40 transition disabled:opacity-50"
+              >
+                {loadingStorage ? 'Recomprimiendo...' : 'Recomprimir imágenes existentes'}
+              </button>
               <button
                 onClick={() => setVerArchivados(!verArchivados)}
                 className={`px-4 py-1.5 rounded-full text-xs border transition ${verArchivados ? 'bg-yellow-900/30 text-yellow-300 border-yellow-700/40' : 'border-[#454a3b] text-[#8c9284] hover:text-white'}`}
@@ -259,13 +331,23 @@ export default function AdminDashboard() {
                         <p className="text-xs text-[#8c9284] font-bold uppercase tracking-wide">Foto principal</p>
                         <div className="flex items-center gap-3">
                           {editData.image_url ? (
-                            <img src={editData.image_url} alt="Principal" className="w-14 h-14 rounded-lg object-cover border border-[#454a3b]" />
+                            <img src={editData.image_url} alt="Principal" className="w-16 h-16 rounded-lg object-cover border border-[#454a3b]" />
                           ) : (
-                            <div className="w-14 h-14 rounded-lg bg-[#35382d] border border-[#454a3b] flex items-center justify-center text-[9px] text-[#8c9284] text-center">Sin foto</div>
+                            <div className="w-16 h-16 rounded-lg bg-[#35382d] border border-dashed border-[#5a614d] flex items-center justify-center text-[#5a614d]">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            </div>
                           )}
-                          <button type="button" onClick={() => abrirPicker('main')} className="text-xs bg-[#454a3b] px-3 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition">
-                            Elegir del storage
-                          </button>
+                          <div className="flex flex-col gap-1.5 items-start">
+                            <label className="flex items-center gap-1.5 text-xs bg-[#EAE6D6] text-[#2D3025] px-3 py-1.5 rounded-full font-bold hover:bg-white transition cursor-pointer">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+                              Subir de galería
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadMain(e.target.files[0])} />
+                            </label>
+                            <button type="button" onClick={() => abrirPicker('main')} className="flex items-center gap-1.5 text-xs text-[#8c9284] hover:text-[#EAE6D6] transition">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                              Elegir del storage
+                            </button>
+                          </div>
                         </div>
 
                         <p className="text-xs text-[#8c9284] font-bold uppercase tracking-wide pt-2">Fotos adicionales</p>
@@ -276,8 +358,16 @@ export default function AdminDashboard() {
                               <button type="button" onClick={() => quitarImagenExtra(url)} className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-[9px] leading-none flex items-center justify-center">×</button>
                             </div>
                           ))}
-                          <button type="button" onClick={() => abrirPicker('extra')} className="text-xs bg-[#454a3b] px-3 py-2 rounded-full border border-[#8c9284] hover:bg-[#5a614d] transition h-fit self-center">
-                            + Agregar fotos
+                        </div>
+                        <div className="flex items-center gap-3 pt-1">
+                          <label className="flex items-center gap-1.5 text-xs bg-[#EAE6D6] text-[#2D3025] px-3 py-1.5 rounded-full font-bold hover:bg-white transition cursor-pointer">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+                            Subir de galería
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadExtra(e.target.files[0])} />
+                          </label>
+                          <button type="button" onClick={() => abrirPicker('extra')} className="flex items-center gap-1.5 text-xs text-[#8c9284] hover:text-[#EAE6D6] transition">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                            Elegir del storage
                           </button>
                         </div>
                       </div>

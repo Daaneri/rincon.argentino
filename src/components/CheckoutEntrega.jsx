@@ -1,9 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-
-const PESO_ESTIMADO_POR_UNIDAD = 0.5;
-const MONTO_ENVIO_GRATIS = 85000;
 
 const PROVINCIAS = [
   { code: "BA", name: "Buenos Aires" }, { code: "CT", name: "Catamarca" },
@@ -20,177 +16,66 @@ const PROVINCIAS = [
   { code: "TF", name: "Tierra del Fuego" }, { code: "TU", name: "Tucumán" },
 ];
 
-const PICKUP_OPTION = {
-  pickup: true,
-  carrierDescription: "Retiro a coordinar",
-  serviceDescription: "Coordinás día y horario por WhatsApp",
-  totalPrice: 0,
-  deliveryEstimate: "A coordinar",
-};
+const PUNTOS_ENCUENTRO = [
+  "Tortugas Open Mall (Tortuguitas)",
+  "Puma Energy 197 y Panamericana (El Talar)",
+  "Pueyrredón 2679 (Villa Ballester)",
+];
+
+const NUMERO_WHATSAPP = "5491133962727";
 
 export default function CheckoutEntrega() {
   const { cart } = useCart();
-  const navigate = useNavigate();
 
   const [shippingData, setShippingData] = useState({
     name: "", dni: "", phone: "", email: "", street: "", floor: "", city: "", state: "", postalCode: "",
   });
-
-  const [rates, setRates] = useState([]);
-  const [selectedRate, setSelectedRate] = useState(null);
-  const [loadingQuote, setLoadingQuote] = useState(false);
-  const [quoteError, setQuoteError] = useState(null);
-  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [tipoEntrega, setTipoEntrega] = useState("envio"); // "envio" | "pickup" | "puntoEncuentro"
+  const [puntoEncuentro, setPuntoEncuentro] = useState("");
 
   const totalProductos = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
-  // Si supera el monto mínimo y el envío no es pickup, el costo es 0
-  const aplicaEnvioGratis = totalProductos >= MONTO_ENVIO_GRATIS;
-  const costoEnvioReal = selectedRate?.pickup ? 0 : (aplicaEnvioGratis ? 0 : (selectedRate?.totalPrice ?? 0));
-  const totalConEnvio = totalProductos + costoEnvioReal;
 
-  async function buscarPorCP(cp) {
-    if (cp.length !== 4) return;
-    try {
-      const res = await fetch(`https://rincon-argentino.onrender.com/api/shipping/geocode/${cp}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const result = Array.isArray(data) ? data[0] : data;
-      if (result) {
-        setShippingData((prev) => ({
-          ...prev,
-          state: result.state?.code?.["2digit"] || prev.state,
-        }));
-      }
-    } catch (err) {
-      console.error("Error buscando CP:", err);
+  function irAWhatsapp() {
+    if (!shippingData.name || !shippingData.dni || !shippingData.phone || !shippingData.email) {
+      alert("Completá nombre, DNI, teléfono y correo antes de continuar.");
+      return;
     }
-  }
-
-  async function cotizarEnvio() {
-    setLoadingQuote(true);
-    setQuoteError(null);
-    setSelectedRate(null);
-
-    const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const estimatedWeight = totalQuantity * PESO_ESTIMADO_POR_UNIDAD;
-
-    const packages = [{
-      type: "box",
-      content: "Productos Rincón Argentino",
-      amount: 1,
-      declaredValue: totalProductos,
-      lengthUnit: "CM",
-      weightUnit: "KG",
-      weight: estimatedWeight,
-      dimensions: { length: 20, width: 20, height: 20 },
-    }];
-
-    try {
-      const res = await fetch("https://rincon-argentino.onrender.com/api/shipping/quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destination: {
-            name: shippingData.name,
-            phone: shippingData.phone,
-            street: shippingData.street,
-            city: shippingData.city,
-            state: shippingData.state,
-            postalCode: shippingData.postalCode,
-            country: "AR",
-          },
-          packages,
-        }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.rates || data.rates.length === 0) {
-        setQuoteError("No se encontraron opciones de envío para esa dirección.");
-        setRates([]);
-        return;
-      }
-
-      // Si aplica envío gratis, forzamos totalPrice a 0 en las opciones cotizadas
-      const ratesModificadas = data.rates.map(rate => ({
-        ...rate,
-        totalPrice: aplicaEnvioGratis ? 0 : rate.totalPrice,
-        customLabel: aplicaEnvioGratis ? "¡Envío Gratis!" : rate.customLabel
-      }));
-
-      setRates(ratesModificadas);
-    } catch (err) {
-      console.error("Error cotizando envío:", err);
-      setQuoteError("Error al conectar con el servidor de envíos.");
-    } finally {
-      setLoadingQuote(false);
+    if (tipoEntrega === "envio" && !shippingData.street) {
+      alert("Completá la dirección de envío.");
+      return;
     }
-  }
-
-  async function irAPagar() {
-    if (!shippingData.name || !shippingData.dni || !shippingData.phone || !shippingData.email || !shippingData.street) {
-      alert("Completá nombre, DNI, teléfono, correo y dirección antes de continuar.");
+    if (tipoEntrega === "puntoEncuentro" && !puntoEncuentro) {
+      alert("Elegí un punto de encuentro.");
       return;
     }
 
-    setLoadingPayment(true);
-    try {
-      const direccionCompleta = shippingData.floor
-        ? `${shippingData.street}, ${shippingData.floor}`
-        : shippingData.street;
+    const direccionCompleta = shippingData.floor
+      ? `${shippingData.street}, ${shippingData.floor}`
+      : shippingData.street;
 
-      const res = await fetch("https://rincon-argentino.onrender.com/api/payment/create-preference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart,
-          shippingCost: costoEnvioReal,
-          shippingDescription: selectedRate.pickup ? "Retiro a coordinar" : (aplicaEnvioGratis ? "Envío Gratis (Promoción)" : (selectedRate.customLabel || `${selectedRate.carrierDescription} - ${selectedRate.serviceDescription}`)),
-          customer: {
-            name: shippingData.name,
-            dni: shippingData.dni,
-            phone: shippingData.phone,
-            email: shippingData.email,
-            address: direccionCompleta,
-            city: shippingData.city,
-            state: shippingData.state,
-            postalCode: shippingData.postalCode,
-          },
-        }),
-      });
+    let mensaje = "¡Hola! Quiero hacer este pedido:%0A%0A";
+    cart.forEach((item) => {
+      mensaje += `• ${item.quantity}x ${item.name} - $${(item.price * item.quantity).toLocaleString("es-AR")}%0A`;
+    });
+    mensaje += `%0A*Subtotal: $${totalProductos.toLocaleString("es-AR")}*%0A%0A`;
+    mensaje += `*Datos de contacto:*%0A`;
+    mensaje += `Nombre: ${shippingData.name}%0A`;
+    mensaje += `DNI: ${shippingData.dni}%0A`;
+    mensaje += `Teléfono: ${shippingData.phone}%0A`;
+    mensaje += `Email: ${shippingData.email}%0A%0A`;
 
-      const data = await res.json();
-
-      if (!res.ok || !data.init_point) {
-        alert("No se pudo iniciar el pago. Probá de nuevo.");
-        setLoadingPayment(false);
-        return;
-      }
-
-      window.location.href = data.init_point;
-    } catch (err) {
-      console.error("Error iniciando pago:", err);
-      alert("Error al conectar con MercadoPago.");
-      setLoadingPayment(false);
-    }
-  }
-
-  function handleRateChange(value) {
-    if (value === "pickup") {
-      setSelectedRate(PICKUP_OPTION);
-    } else if (value === "") {
-      setSelectedRate(null);
+    if (tipoEntrega === "pickup") {
+      mensaje += `*Entrega:* Retiro a coordinar`;
+    } else if (tipoEntrega === "puntoEncuentro") {
+      mensaje += `*Entrega:* Punto de encuentro - ${puntoEncuentro}`;
     } else {
-      // Si aplica envío gratis, nos aseguramos de que la tarifa seleccionada tenga precio 0
-      const rateSeleccionada = rates[value];
-      setSelectedRate({
-        ...rateSeleccionada,
-        totalPrice: aplicaEnvioGratis ? 0 : rateSeleccionada.totalPrice
-      });
+      mensaje += `*Dirección de envío:*%0A`;
+      mensaje += `${direccionCompleta}, ${shippingData.city}, ${shippingData.state} (CP ${shippingData.postalCode})%0A`;
+      mensaje += `*Costo de envío:* a coordinar`;
     }
-  }
 
-  const selectValue = selectedRate?.pickup ? "pickup" : (selectedRate ? rates.indexOf(selectedRate) : "");
+    window.location.href = `https://wa.me/${NUMERO_WHATSAPP}?text=${mensaje}`;
+  }
 
   const inputClass =
     "w-full bg-transparent border border-[#E6DCC8]/20 rounded-xl px-4 py-3 text-[#E6DCC8] placeholder:text-[#E6DCC8]/40 focus:outline-none focus:border-[#E6DCC8]/60 transition-colors text-sm sm:text-base";
@@ -202,16 +87,7 @@ export default function CheckoutEntrega() {
         <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/20" />
         <span className="text-[#E6DCC8] font-semibold">Entrega</span>
         <div className="h-px w-8 sm:w-12 bg-[#E6DCC8]/20" />
-        <span>Pago</span>
-      </div>
-
-      {/* Aviso flotante de Envío Gratis */}
-      <div className="mb-6 p-4 rounded-2xl bg-[#2D3025]/60 border border-[#E6DCC8]/20 text-center text-sm sm:text-base text-[#E6DCC8]">
-        {aplicaEnvioGratis ? (
-          <span className="font-semibold text-emerald-400">🎉 ¡Felicitaciones! Tenés envío gratis en este pedido.</span>
-        ) : (
-          <span>Agregá <strong className="text-white">${(MONTO_ENVIO_GRATIS - totalProductos).toLocaleString("es-AR")}</strong> más en productos para obtener <strong>envío gratis</strong>.</span>
-        )}
+        <span>WhatsApp</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -228,33 +104,67 @@ export default function CheckoutEntrega() {
 
           <div className="bg-[#2D3025]/40 rounded-2xl sm:rounded-3xl border border-[#E6DCC8]/10 p-5 sm:p-8 space-y-3 sm:space-y-4">
             <h2 className="text-xl sm:text-2xl font-serif text-[#E6DCC8] mb-1 sm:mb-2">Entrega</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <input className={inputClass} placeholder="Código Postal" value={shippingData.postalCode} onChange={(e) => { const cp = e.target.value; setShippingData({ ...shippingData, postalCode: cp }); buscarPorCP(cp); }} />
-              <input className={inputClass} placeholder="Localidad" value={shippingData.city} onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })} />
-              <select className={inputClass} value={shippingData.state} onChange={(e) => setShippingData({ ...shippingData, state: e.target.value })}>
-                <option value="" className="text-black">Provincia</option>
-                {PROVINCIAS.map((p) => (<option key={p.code} value={p.code} className="text-black">{p.name}</option>))}
-              </select>
+
+            <div className="flex gap-2 sm:gap-3">
+              <button
+                onClick={() => setTipoEntrega("envio")}
+                className={`flex-1 rounded-xl px-3 py-3 border text-xs sm:text-sm transition-colors ${tipoEntrega === "envio" ? "bg-[#E6DCC8] text-[#2D3025] border-[#E6DCC8]" : "border-[#E6DCC8]/20 text-[#E6DCC8]"}`}
+              >
+                Envío
+              </button>
+              <button
+                onClick={() => setTipoEntrega("pickup")}
+                className={`flex-1 rounded-xl px-3 py-3 border text-xs sm:text-sm transition-colors ${tipoEntrega === "pickup" ? "bg-[#E6DCC8] text-[#2D3025] border-[#E6DCC8]" : "border-[#E6DCC8]/20 text-[#E6DCC8]"}`}
+              >
+                Retiro
+              </button>
+              <button
+                onClick={() => setTipoEntrega("puntoEncuentro")}
+                className={`flex-1 rounded-xl px-3 py-3 border text-xs sm:text-sm transition-colors ${tipoEntrega === "puntoEncuentro" ? "bg-[#E6DCC8] text-[#2D3025] border-[#E6DCC8]" : "border-[#E6DCC8]/20 text-[#E6DCC8]"}`}
+              >
+                Punto de encuentro
+              </button>
             </div>
-            <input className={inputClass} placeholder="Calle y número" value={shippingData.street} onChange={(e) => setShippingData({ ...shippingData, street: e.target.value })} />
-            <input className={inputClass} placeholder="Piso / Departamento (opcional)" value={shippingData.floor} onChange={(e) => setShippingData({ ...shippingData, floor: e.target.value })} />
 
-            <button onClick={cotizarEnvio} disabled={loadingQuote} className="w-full sm:w-auto bg-[#E6DCC8] hover:bg-white disabled:opacity-50 text-[#2D3025] font-semibold rounded-xl px-6 py-3 transition-colors text-sm sm:text-base">
-              {loadingQuote ? "Cotizando..." : "Calcular envío"}
-            </button>
+            {tipoEntrega === "envio" && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <input className={inputClass} placeholder="Código Postal" value={shippingData.postalCode} onChange={(e) => setShippingData({ ...shippingData, postalCode: e.target.value })} />
+                  <input className={inputClass} placeholder="Localidad" value={shippingData.city} onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })} />
+                  <select className={inputClass} value={shippingData.state} onChange={(e) => setShippingData({ ...shippingData, state: e.target.value })}>
+                    <option value="" className="text-black">Provincia</option>
+                    {PROVINCIAS.map((p) => (<option key={p.code} value={p.code} className="text-black">{p.name}</option>))}
+                  </select>
+                </div>
+                <input className={inputClass} placeholder="Calle y número" value={shippingData.street} onChange={(e) => setShippingData({ ...shippingData, street: e.target.value })} />
+                <input className={inputClass} placeholder="Piso / Departamento (opcional)" value={shippingData.floor} onChange={(e) => setShippingData({ ...shippingData, floor: e.target.value })} />
+                <p className="text-xs text-[#E6DCC8]/50">El costo de envío se coordina por WhatsApp.</p>
+              </>
+            )}
 
-            {(rates.length > 0 || !quoteError) && (
-              <div className="pt-2">
-                <label className="block text-xs sm:text-sm text-[#E6DCC8]/70 mb-2">Elegí una opción de envío</label>
-                <select className={inputClass} value={selectValue} onChange={(e) => handleRateChange(e.target.value)}>
-                  <option value="" className="text-black">Seleccioná una opción</option>
-                  <option value="pickup" className="text-black">Retiro a coordinar por WhatsApp (sin costo)</option>
-                  {rates.map((rate, i) => (
-                    <option key={i} value={i} className="text-black">
-                      {rate.carrierDescription} - {rate.serviceDescription} - {aplicaEnvioGratis ? "¡Envío Gratis!" : `$${rate.totalPrice.toLocaleString("es-AR")}`}
-                    </option>
-                  ))}
-                </select>
+            {tipoEntrega === "pickup" && (
+              <p className="text-sm text-[#E6DCC8]/70">Coordinás día y horario de retiro por WhatsApp.</p>
+            )}
+
+            {tipoEntrega === "puntoEncuentro" && (
+              <div className="space-y-2">
+                {PUNTOS_ENCUENTRO.map((punto) => (
+                  <label
+                    key={punto}
+                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors text-sm ${
+                      puntoEncuentro === punto ? "border-[#E6DCC8] bg-[#E6DCC8]/10" : "border-[#E6DCC8]/20"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="puntoEncuentro"
+                      checked={puntoEncuentro === punto}
+                      onChange={() => setPuntoEncuentro(punto)}
+                      className="accent-[#E6DCC8]"
+                    />
+                    <span className="text-[#E6DCC8]">{punto}</span>
+                  </label>
+                ))}
               </div>
             )}
           </div>
@@ -262,24 +172,12 @@ export default function CheckoutEntrega() {
 
         <div className="lg:col-span-5 bg-[#1A1C16] p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[#E6DCC8]/10 lg:sticky lg:top-28 shadow-2xl space-y-3 sm:space-y-4">
           <h2 className="text-xl sm:text-3xl font-serif text-[#E6DCC8] mb-4 sm:mb-6">Sumario de compra</h2>
-          <div className="flex justify-between text-xs sm:text-sm text-[#E6DCC8]/70">
-            <span>Subtotal</span>
-            <span>${totalProductos.toLocaleString("es-AR")}</span>
-          </div>
-          <div className="flex justify-between text-xs sm:text-sm text-[#E6DCC8]/70">
-            <span>Envío</span>
-            <span>
-              {selectedRate 
-                ? (costoEnvioReal === 0 ? "Gratis" : `$${costoEnvioReal.toLocaleString("es-AR")}`) 
-                : "A calcular"}
-            </span>
-          </div>
           <div className="flex justify-between items-center text-lg sm:text-2xl font-bold text-[#E6DCC8] border-t border-[#E6DCC8]/10 pt-4 sm:pt-6">
             <span>Total</span>
-            <span className="text-2xl sm:text-4xl tracking-tight">${totalConEnvio.toLocaleString("es-AR")}</span>
+            <span className="text-2xl sm:text-4xl tracking-tight">${totalProductos.toLocaleString("es-AR")}</span>
           </div>
-          <button onClick={irAPagar} disabled={!selectedRate || loadingPayment} className="w-full bg-[#E6DCC8] hover:bg-white disabled:opacity-40 text-[#2D3025] font-semibold rounded-xl px-6 py-3.5 sm:py-4 transition-colors text-base sm:text-lg mt-2">
-            {loadingPayment ? "Redirigiendo..." : "Continuar para el pago"}
+          <button onClick={irAWhatsapp} className="w-full bg-[#E6DCC8] hover:bg-white text-[#2D3025] font-semibold rounded-xl px-6 py-3.5 sm:py-4 transition-colors text-base sm:text-lg mt-2">
+            Continuar por WhatsApp
           </button>
         </div>
       </div>
